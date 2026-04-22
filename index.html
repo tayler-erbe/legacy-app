@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0a1628">
 <meta name="description" content="A private memory vault. Quiet stories, saved in your voice.">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
 <title>Legacy — A memory for later</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,36 +21,199 @@
 
 <div id="app">
   <header class="masthead">
-    <div class="eyebrow">Legacy · MVP</div>
-    <h1>A memory for later</h1>
-    <div class="subtitle">Quiet stories, saved in your voice.</div>
-  </header>
-
-  <div class="toolbar">
-    <div class="count"><strong id="memoryCount">0</strong> memories</div>
-    <div class="toolbar-actions">
-      <button class="icon-btn" id="exportBtn" title="Export all memories" aria-label="Export">
+    <div class="masthead-top">
+      <button class="icon-btn masthead-btn" id="aboutBtn" title="About Legacy" aria-label="About">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
+      <div class="masthead-center">
+        <div class="eyebrow">Legacy</div>
+      </div>
+      <button class="icon-btn masthead-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
       </button>
     </div>
-  </div>
+    <h1 id="mastheadTitle">A memory for later</h1>
+    <div class="subtitle" id="mastheadSubtitle">Quiet stories, saved in your voice.</div>
+  </header>
 
-  <div class="memories" id="memoryList"></div>
+  <!-- MEMORIES TAB -->
+  <section class="tab-panel active" id="tabMemories">
+    <div class="toolbar">
+      <div class="count"><strong id="memoryCount">0</strong> memories</div>
+      <div class="toolbar-actions">
+        <button class="icon-btn" id="exportBtn" title="Export all memories" aria-label="Export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
 
-  <button class="fab" id="fab" aria-label="Add memory">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-  </button>
+    <div class="memories" id="memoryList"></div>
+
+    <button class="fab" id="fab" aria-label="Add memory">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+  </section>
+
+  <!-- CHAT TAB -->
+  <section class="tab-panel" id="tabChat">
+    <div class="chat-placeholder">
+      <div class="chat-avatar" id="chatAvatar">
+        <span id="chatAvatarLetter">L</span>
+      </div>
+      <div class="chat-eyebrow">Coming soon</div>
+      <h2 class="chat-title" id="chatTitle">Talk to me</h2>
+      <p class="chat-desc">
+        Ask about a day. A person. A memory you're trying to remember the shape of.
+      </p>
+      <p class="chat-desc">
+        This is where the stories you save come back to you — told in your own voice. It's still being built.
+      </p>
+      <div class="chat-status">
+        <div class="chat-status-num" id="chatMemoryCount">0</div>
+        <div class="chat-status-label">Memories saved so far</div>
+      </div>
+      <p class="chat-footer">
+        Every memory you add makes this conversation richer when it opens.
+      </p>
+      <button class="btn-ghost" id="addFromChatBtn">Add a memory</button>
+    </div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="memories">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      <span>Memories</span>
+    </button>
+    <button class="nav-item" data-tab="chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span id="navChatLabel">Chat</span>
+    </button>
+  </nav>
 </div>
 
+<!-- Welcome modal (first launch) -->
+<div class="welcome-backdrop" id="welcomeBackdrop">
+  <div class="welcome-card">
+    <div class="welcome-eyebrow">Welcome</div>
+    <h2 class="welcome-title">Legacy</h2>
+    <p class="welcome-intro">A vault for the stories you'd want someone to hear later.</p>
+    <div class="welcome-body">
+      <p>A photo. A voice memo. A paragraph about what happened that day. Whatever you have. Whoever it's for.</p>
+      <p>Over time, the stories you save here become the foundation for something more — an AI that can tell them back in your voice, to the people who'll want to hear them.</p>
+      <p class="welcome-body-accent">Start with one memory. You can add more whenever.</p>
+    </div>
+    <button class="btn-primary welcome-cta" id="welcomeCta">Get started</button>
+  </div>
+</div>
+
+<!-- Shared modal backdrop -->
 <div class="modal-backdrop" id="modalBackdrop"></div>
 
+<!-- About modal -->
+<div class="modal" id="aboutModal">
+  <div class="modal-inner">
+    <header class="modal-header">
+      <h2>About Legacy</h2>
+      <button class="icon-btn" id="closeAbout" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+    <div class="about-content">
+      <h3 class="about-h3">What this is</h3>
+      <p>Legacy is a private vault for your memories. A photo, a voice recording, a written story — saved together, so the people who matter can hear them later.</p>
+
+      <h3 class="about-h3">How to use it</h3>
+      <p>Tap the <strong>+</strong> button to add a new memory. You can include:</p>
+      <ul class="about-list">
+        <li>A photo from your phone or camera</li>
+        <li>A voice recording telling the story out loud</li>
+        <li>A written version of the story</li>
+        <li>The date it happened</li>
+        <li>Who was there</li>
+        <li>Tags for finding it later</li>
+      </ul>
+      <p>You only need one of these. Start with whatever feels easiest.</p>
+
+      <h3 class="about-h3">Where this is going</h3>
+      <p>The memories you save become the foundation for a second layer — an AI trained to tell your stories back in your own voice. Open the <strong>Chat</strong> tab to see where it's headed. It's still being built.</p>
+
+      <h3 class="about-h3">Your data</h3>
+      <p>Right now everything is stored privately on this device. Nothing is uploaded anywhere. Use the export button (top right of the Memories tab) to download a full backup — photos, audio, and all — at any time.</p>
+
+      <h3 class="about-h3">One small note</h3>
+      <p>You don't have to write a perfect story. Imperfect is more real. Just the way you'd tell it out loud is enough.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal" id="settingsModal">
+  <div class="modal-inner">
+    <header class="modal-header">
+      <h2>Settings</h2>
+      <button class="icon-btn" id="closeSettings" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Your photo</label>
+        <div class="avatar-drop" id="avatarDrop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <div class="drop-text">Tap to add a photo</div>
+          <input type="file" id="avatarInput" accept="image/*">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your name</label>
+        <input type="text" id="nameInput" placeholder="What should we call you?">
+      </div>
+      <div class="form-group">
+        <div class="transcribe-note">
+          <strong>How this is used</strong>
+          Your name appears in the chat tab ("Talk to [name]") and as a greeting when you open the app. Your photo shows on the chat screen. Nothing is sent anywhere — it lives on this device only.
+        </div>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button class="btn-secondary" id="cancelSettings">Cancel</button>
+      <button class="btn-primary" id="saveSettings">Save</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Add/Edit memory modal -->
 <div class="modal" id="addModal">
   <div class="modal-inner">
     <header class="modal-header">
@@ -132,6 +295,7 @@
   </div>
 </div>
 
+<!-- Detail modal -->
 <div class="modal" id="detailModal">
   <div class="modal-inner">
     <header class="modal-header">

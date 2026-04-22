@@ -1,14 +1,15 @@
 /**
  * Legacy — a memory vault PWA.
  *
- * Storage model (all local to the device for the MVP):
- *   IndexedDB database: "legacy_memories"
- *     - Object store "memories": keyed by memory.id, holds full memory records
- *     - Object store "images":   keyed by memory.id, holds Blob
- *     - Object store "audio":    keyed by memory.id, holds Blob
+ * Storage:
+ *   IndexedDB "legacy_memories":
+ *     - "memories" store: keyed by memory.id
+ *     - "images" store: keyed by memory.id, holds Blob
+ *     - "audio" store: keyed by memory.id, holds Blob
+ *     - "settings" store: keyed by setting key (e.g. "user")
  *
- * Every memory record carries a userId field (currently "local_user") so
- * the schema is already multi-tenant-ready for the backend phase.
+ *   localStorage:
+ *     - "legacy_welcome_seen": "1" once the user has dismissed the welcome screen
  */
 (() => {
   'use strict';
@@ -16,10 +17,11 @@
   // ============= STORAGE =============
 
   const DB_NAME = 'legacy_memories';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const STORE_MEMORIES = 'memories';
   const STORE_IMAGES = 'images';
   const STORE_AUDIO = 'audio';
+  const STORE_SETTINGS = 'settings';
 
   let db = null;
 
@@ -31,6 +33,7 @@
         if (!_db.objectStoreNames.contains(STORE_MEMORIES)) _db.createObjectStore(STORE_MEMORIES, { keyPath: 'id' });
         if (!_db.objectStoreNames.contains(STORE_IMAGES)) _db.createObjectStore(STORE_IMAGES);
         if (!_db.objectStoreNames.contains(STORE_AUDIO)) _db.createObjectStore(STORE_AUDIO);
+        if (!_db.objectStoreNames.contains(STORE_SETTINGS)) _db.createObjectStore(STORE_SETTINGS);
       };
       req.onsuccess = (e) => { db = e.target.result; resolve(db); };
       req.onerror = (e) => reject(e.target.error);
@@ -40,7 +43,6 @@
   function idbPut(store, key, value) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(store, 'readwrite');
-      // For memories store, key is embedded in object via keyPath
       if (store === STORE_MEMORIES) tx.objectStore(store).put(value);
       else tx.objectStore(store).put(value, key);
       tx.oncomplete = () => resolve();
@@ -81,12 +83,23 @@
     try { await idbDel(STORE_AUDIO, id); } catch {}
   }
 
+  async function loadSettings() {
+    try {
+      const s = await idbGet(STORE_SETTINGS, 'user');
+      return s || { name: '', avatar: null };
+    } catch { return { name: '', avatar: null }; }
+  }
+  async function saveSettings(s) { return idbPut(STORE_SETTINGS, 'user', s); }
+
   // ============= STATE =============
   const state = {
     memories: [],
     editing: null,
     draft: { image: null, audio: null, audioMime: null },
     detailId: null,
+    settings: { name: '', avatar: null },
+    settingsDraft: { name: '', avatar: null, avatarBlob: null },
+    activeTab: 'memories',
   };
 
   // ============= HELPERS =============
@@ -123,16 +136,154 @@
     }[c]));
   }
 
-  // ============= RENDER =============
+  // ============= WELCOME =============
+  function showWelcomeIfFirstTime() {
+    try {
+      if (localStorage.getItem('legacy_welcome_seen') === '1') return;
+    } catch {}
+    document.getElementById('welcomeBackdrop').classList.add('open');
+  }
+  function dismissWelcome() {
+    document.getElementById('welcomeBackdrop').classList.remove('open');
+    try { localStorage.setItem('legacy_welcome_seen', '1'); } catch {}
+  }
+
+  // ============= SETTINGS / PERSONALIZATION =============
+  function applyPersonalization() {
+    const name = (state.settings.name || '').trim();
+    const avatar = state.settings.avatar;
+
+    // Masthead greeting
+    const title = document.getElementById('mastheadTitle');
+    const subtitle = document.getElementById('mastheadSubtitle');
+    if (name) {
+      title.textContent = 'A memory for later';
+      subtitle.textContent = `Hello, ${name}. Quiet stories, saved in your voice.`;
+    } else {
+      title.textContent = 'A memory for later';
+      subtitle.textContent = 'Quiet stories, saved in your voice.';
+    }
+
+    // Chat title + nav label
+    const chatTitle = document.getElementById('chatTitle');
+    const navChatLabel = document.getElementById('navChatLabel');
+    if (name) {
+      chatTitle.textContent = `Talk to ${name}`;
+      navChatLabel.textContent = name.split(' ')[0];
+    } else {
+      chatTitle.textContent = 'Talk to me';
+      navChatLabel.textContent = 'Chat';
+    }
+
+    // Chat avatar
+    const avatarEl = document.getElementById('chatAvatar');
+    const letterEl = document.getElementById('chatAvatarLetter');
+    avatarEl.querySelectorAll('img').forEach(n => n.remove());
+    if (avatar) {
+      const img = document.createElement('img');
+      img.src = avatar;
+      avatarEl.appendChild(img);
+      letterEl.style.display = 'none';
+    } else {
+      letterEl.style.display = 'block';
+      letterEl.textContent = name ? name.trim().charAt(0).toUpperCase() : 'L';
+    }
+  }
+
+  function openSettings() {
+    state.settingsDraft = {
+      name: state.settings.name || '',
+      avatar: state.settings.avatar || null,
+      avatarBlob: null
+    };
+    document.getElementById('nameInput').value = state.settingsDraft.name;
+
+    // Reset avatar drop
+    const drop = document.getElementById('avatarDrop');
+    drop.classList.remove('has-image');
+    drop.querySelectorAll('img').forEach(n => n.remove());
+    if (state.settingsDraft.avatar) {
+      drop.classList.add('has-image');
+      const img = document.createElement('img');
+      img.src = state.settingsDraft.avatar;
+      drop.appendChild(img);
+    }
+
+    document.getElementById('modalBackdrop').classList.add('open');
+    document.getElementById('settingsModal').classList.add('open');
+  }
+  function closeSettings() {
+    document.getElementById('modalBackdrop').classList.remove('open');
+    document.getElementById('settingsModal').classList.remove('open');
+  }
+  async function applySettings() {
+    state.settings.name = state.settingsDraft.name.trim();
+    state.settings.avatar = state.settingsDraft.avatar;
+    try {
+      await saveSettings(state.settings);
+      applyPersonalization();
+      closeSettings();
+      toast('Settings saved');
+    } catch (err) {
+      console.error(err);
+      toast('Could not save settings');
+    }
+  }
+
+  document.getElementById('avatarInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // Store as data URL (small, lets us embed directly in <img>)
+    const dataUrl = await blobToBase64(file);
+    state.settingsDraft.avatar = dataUrl;
+    const drop = document.getElementById('avatarDrop');
+    drop.classList.add('has-image');
+    drop.querySelectorAll('img').forEach(n => n.remove());
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    drop.appendChild(img);
+  });
+
+  document.getElementById('nameInput').addEventListener('input', (e) => {
+    state.settingsDraft.name = e.target.value;
+  });
+
+  // ============= TAB SWITCHING =============
+  function switchTab(tab) {
+    state.activeTab = tab;
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.tab === tab);
+    });
+    document.getElementById('tabMemories').classList.toggle('active', tab === 'memories');
+    document.getElementById('tabChat').classList.toggle('active', tab === 'chat');
+
+    // Update the chat memory count when switching to chat
+    if (tab === 'chat') {
+      document.getElementById('chatMemoryCount').textContent = state.memories.length;
+    }
+
+    // Scroll to top on tab change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // ============= RENDER LIST =============
   async function renderList() {
     const el = document.getElementById('memoryList');
     document.getElementById('memoryCount').textContent = state.memories.length;
+    document.getElementById('chatMemoryCount').textContent = state.memories.length;
 
     if (state.memories.length === 0) {
       el.innerHTML = `
         <div class="empty-state">
           <div class="big-quote">Start with one small moment.</div>
           <p>A photo. A sentence. The smallest thing you'd want them to know.</p>
+          <div class="cta-hint">
+            Tap the <strong>+</strong> button to add your first memory.
+          </div>
         </div>`;
       return;
     }
@@ -173,7 +324,7 @@
     }
   }
 
-  // ============= MODAL =============
+  // ============= ADD/EDIT MEMORY MODAL =============
   function openModal(editingId = null) {
     state.editing = editingId;
     state.draft = { image: null, audio: null, audioMime: null };
@@ -222,6 +373,16 @@
     document.getElementById('addModal').classList.remove('open');
     state.editing = null;
     state.draft = { image: null, audio: null, audioMime: null };
+  }
+
+  // ============= ABOUT MODAL =============
+  function openAbout() {
+    document.getElementById('modalBackdrop').classList.add('open');
+    document.getElementById('aboutModal').classList.add('open');
+  }
+  function closeAbout() {
+    document.getElementById('modalBackdrop').classList.remove('open');
+    document.getElementById('aboutModal').classList.remove('open');
   }
 
   // ============= PHOTO =============
@@ -350,7 +511,7 @@
     if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTagBtn').click(); }
   });
 
-  // ============= SAVE =============
+  // ============= SAVE MEMORY =============
   async function saveMemoryFromForm() {
     const title = document.getElementById('titleInput').value.trim();
     const date = document.getElementById('dateInput').value;
@@ -372,7 +533,7 @@
     const memory = {
       id,
       schema_version: '1.1',
-      userId: 'local_user',            // reserved for future multi-tenant backend
+      userId: 'local_user',
       title: title || 'Untitled',
       date: date || null,
       dateApproximate: false,
@@ -476,6 +637,7 @@
     const payload = {
       schema_version: '1.1',
       exported_at: new Date().toISOString(),
+      user: { name: state.settings.name || null },
       description: 'Legacy memory export. Images and audio are base64-encoded inline for portability.',
       memories: []
     };
@@ -514,17 +676,37 @@
   document.getElementById('deleteBtn').addEventListener('click', deleteCurrent);
   document.getElementById('editBtn').addEventListener('click', editCurrent);
   document.getElementById('exportBtn').addEventListener('click', exportAll);
+
+  document.getElementById('aboutBtn').addEventListener('click', openAbout);
+  document.getElementById('closeAbout').addEventListener('click', closeAbout);
+
+  document.getElementById('settingsBtn').addEventListener('click', openSettings);
+  document.getElementById('closeSettings').addEventListener('click', closeSettings);
+  document.getElementById('cancelSettings').addEventListener('click', closeSettings);
+  document.getElementById('saveSettings').addEventListener('click', applySettings);
+
+  document.getElementById('welcomeCta').addEventListener('click', dismissWelcome);
+  document.getElementById('addFromChatBtn').addEventListener('click', () => {
+    switchTab('memories');
+    setTimeout(() => openModal(), 200);
+  });
+
   document.getElementById('modalBackdrop').addEventListener('click', () => {
     closeModal();
     closeDetail();
+    closeAbout();
+    closeSettings();
   });
 
   // ============= INIT =============
   (async () => {
     try {
       await openDB();
+      state.settings = await loadSettings();
       state.memories = await loadAllMemories();
+      applyPersonalization();
       await renderList();
+      showWelcomeIfFirstTime();
     } catch (err) {
       console.error('Init failed', err);
       toast('Storage init failed');
