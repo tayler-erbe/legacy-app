@@ -9,6 +9,8 @@
  *     - "settings" store: keyed by setting key
  *         "user": { name, avatar }            — personalization
  *         "meta": { lastExportAt }            — backup bookkeeping
+ *         "questions": [{ id, text, from, askedAt, answeredBy }] — family "ask me" questions
+ *         "plan": { recipients, backupLocation, aiMode } — the user's legacy plan
  *
  *   localStorage:
  *     - "legacy_welcome_seen": "1" once the user has dismissed the welcome screen
@@ -20,7 +22,7 @@
 (() => {
   'use strict';
 
-  const SCHEMA_VERSION = '1.2';
+  const SCHEMA_VERSION = '2.0';
   const BACKUP_NUDGE_THRESHOLD = 5;   // unbacked memories before we nudge
   const AVATAR_MAX_PX = 320;
 
@@ -109,6 +111,16 @@
   }
   async function saveMeta(m) { return idbPut(STORE_SETTINGS, 'meta', m); }
 
+  async function loadKey(key, fallback) {
+    try {
+      const v = await idbGet(STORE_SETTINGS, key);
+      return v == null ? fallback : v;
+    } catch { return fallback; }
+  }
+  async function saveKey(key, value) { return idbPut(STORE_SETTINGS, key, value); }
+
+  const DEFAULT_PLAN = { recipients: '', backupLocation: '', aiMode: 'undecided' };
+
   // Ask the browser not to evict our data under storage pressure.
   // Safari in particular will purge IndexedDB for sites that aren't persisted.
   async function requestPersistence() {
@@ -128,6 +140,8 @@
     settings: { name: '', avatar: null },
     settingsDraft: { name: '', avatar: null },
     meta: { lastExportAt: null },
+    questions: [],
+    plan: { ...DEFAULT_PLAN },
     activeTab: 'memories',
     query: '',
   };
@@ -136,7 +150,7 @@
     return {
       image: null, audio: null, audioMime: null,
       removeImage: false, removeAudio: false,
-      prompt: null,
+      prompt: null, askedBy: null, questionId: null,
     };
   }
 
@@ -370,6 +384,7 @@
     };
     $('nameInput').value = state.settingsDraft.name;
     renderAvatarDrop(state.settingsDraft.avatar);
+    fillPlanForm(state.plan);
     renderBackupStatus();
     showModal('settingsModal');
   }
@@ -378,8 +393,10 @@
   async function applySettings() {
     state.settings.name = state.settingsDraft.name.trim();
     state.settings.avatar = state.settingsDraft.avatar;
+    state.plan = readPlanForm();
     try {
       await saveSettings(state.settings);
+      await saveKey('plan', state.plan);
       applyPersonalization();
       closeSettings();
       toast('Settings saved');
@@ -515,6 +532,7 @@
     $('chatMemoryCount').textContent = total;
     $('searchWrap').hidden = total === 0;
     renderBackupBanner();
+    renderAskBanner();
     renderOnThisDay();
 
     if (total === 0) {
@@ -626,32 +644,260 @@
   ];
   let promptIndex = Math.floor(Math.random() * PROMPTS.length);
 
-  function showPromptSuggestion() {
-    $('promptText').textContent = PROMPTS[promptIndex % PROMPTS.length];
+  // The suggestion card shows questions family asked first (newest first),
+  // then falls back to the built-in prompts.
+  let suggestion = null;  // { kind: 'question', q } | { kind: 'prompt', text }
+
+  function openQuestions() {
+    return state.questions.filter(q => !q.answeredBy).sort((a, b) => b.askedAt - a.askedAt);
   }
-  function shufflePrompt() {
+  function randomPrompt() {
     let next = promptIndex;
     while (PROMPTS.length > 1 && next === promptIndex) next = Math.floor(Math.random() * PROMPTS.length);
     promptIndex = next;
-    showPromptSuggestion();
+    return { kind: 'prompt', text: PROMPTS[promptIndex] };
+  }
+  function showSuggestion() {
+    if (!suggestion) return;
+    const isQ = suggestion.kind === 'question';
+    $('promptEyebrow').textContent = isQ
+      ? (suggestion.q.from ? `${suggestion.q.from} asked you` : 'Someone asked you')
+      : 'Need a starting point?';
+    $('promptText').textContent = isQ ? suggestion.q.text : suggestion.text;
+    $('promptDismiss').hidden = !isQ;
+    $('promptCard').classList.toggle('is-question', isQ);
+  }
+  function resetSuggestion() {
+    const qs = openQuestions();
+    suggestion = qs.length ? { kind: 'question', q: qs[0] } : { kind: 'prompt', text: PROMPTS[promptIndex] };
+    showSuggestion();
+  }
+  function nextSuggestion() {
+    const qs = openQuestions();
+    if (suggestion && suggestion.kind === 'question') {
+      const i = qs.findIndex(q => q.id === suggestion.q.id);
+      if (i >= 0 && i + 1 < qs.length) { suggestion = { kind: 'question', q: qs[i + 1] }; showSuggestion(); return; }
+    }
+    suggestion = randomPrompt();
+    showSuggestion();
+  }
+  function pinQuestion(q) {
+    state.draft.prompt = q.text;
+    state.draft.askedBy = q.from || null;
+    state.draft.questionId = q.id;
+    renderPromptState();
   }
   function renderPromptState() {
     const pinned = !!state.draft.prompt;
     $('promptPinned').hidden = !pinned;
     $('promptPinnedText').textContent = state.draft.prompt || '';
+    $('promptPinnedFrom').hidden = !state.draft.askedBy;
+    $('promptPinnedFrom').textContent = state.draft.askedBy ? `${state.draft.askedBy} asked` : '';
     // Only offer suggestions on brand-new memories.
     $('promptCard').hidden = pinned || !!state.editing;
   }
-  $('promptShuffle').addEventListener('click', shufflePrompt);
+  $('promptShuffle').addEventListener('click', nextSuggestion);
   $('promptUse').addEventListener('click', () => {
-    state.draft.prompt = PROMPTS[promptIndex % PROMPTS.length];
-    renderPromptState();
+    if (!suggestion) return;
+    if (suggestion.kind === 'question') pinQuestion(suggestion.q);
+    else {
+      state.draft.prompt = suggestion.text;
+      state.draft.askedBy = null;
+      state.draft.questionId = null;
+      renderPromptState();
+    }
     $('storyInput').focus();
+  });
+  $('promptDismiss').addEventListener('click', async () => {
+    if (!suggestion || suggestion.kind !== 'question') return;
+    if (!confirm('Remove this question? It won\'t be shown again.')) return;
+    await removeQuestion(suggestion.q.id);
+    resetSuggestion();
+    renderAskBanner();
   });
   $('promptUnpin').addEventListener('click', () => {
     state.draft.prompt = null;
+    state.draft.askedBy = null;
+    state.draft.questionId = null;
     renderPromptState();
   });
+
+  // ============= FAMILY QUESTIONS ("ask me" links) =============
+  const MAX_QUESTION = 500;
+  const MAX_FROM = 60;
+
+  function appUrl() { return location.origin + location.pathname; }
+
+  async function saveQuestions() {
+    try { await saveKey('questions', state.questions); } catch (err) { console.error(err); }
+  }
+  async function addQuestion(text, from) {
+    text = String(text || '').trim().slice(0, MAX_QUESTION);
+    from = String(from || '').trim().slice(0, MAX_FROM) || null;
+    if (!text) return null;
+    const dupe = state.questions.find(q => q.text === text && (q.from || null) === from);
+    if (dupe) return dupe;
+    const q = { id: 'q_' + uuid().slice(4), text, from, askedAt: Date.now(), answeredBy: null };
+    state.questions.push(q);
+    await saveQuestions();
+    return q;
+  }
+  async function removeQuestion(id) {
+    state.questions = state.questions.filter(q => q.id !== id);
+    await saveQuestions();
+  }
+  async function markAnswered(id, memoryId) {
+    const q = state.questions.find(x => x.id === id);
+    if (!q) return;
+    q.answeredBy = memoryId;
+    await saveQuestions();
+  }
+
+  function renderAskBanner() {
+    const qs = openQuestions();
+    const show = qs.length > 0 && !state.query;
+    $('askBanner').hidden = !show;
+    if (!show) return;
+    const q = qs[0];
+    $('askBannerFrom').textContent = qs.length > 1
+      ? `${qs.length} questions from family are waiting`
+      : `${q.from || 'Someone'} asked you`;
+    $('askBannerQ').textContent = `“${q.text}”`;
+  }
+  $('askBannerBtn').addEventListener('click', async () => {
+    const q = openQuestions()[0];
+    if (!q) return;
+    await openModal();
+    pinQuestion(q);
+  });
+
+  async function shareLink(url, title, text) {
+    if (navigator.share) {
+      try { await navigator.share({ title, text, url }); return 'shared'; }
+      catch (err) { if (err && err.name === 'AbortError') return 'cancelled'; }
+    }
+    try { await navigator.clipboard.writeText(url); toast('Link copied'); return 'copied'; }
+    catch { window.prompt('Copy this link:', url); return 'shown'; }
+  }
+
+  async function inviteFamily() {
+    const name = (state.settings.name || $('nameInput').value || '').trim();
+    if (!name) {
+      toast('Add your name in Settings first');
+      if (!isOpen('settingsModal')) openSettings();
+      $('nameInput').focus();
+      return;
+    }
+    const url = `${appUrl()}?askme=${encodeURIComponent(name)}`;
+    await shareLink(url, `Ask ${name} a question`,
+      `I'm saving my stories in Legacy. What would you like to ask me? Send me a question here:`);
+  }
+  $('inviteBtn').addEventListener('click', inviteFamily);
+  $('inviteFromChatBtn').addEventListener('click', inviteFamily);
+
+  // --- composer shown to a family member who opened an ?askme= link
+  const ASK_IDEAS = [
+    'How did you and Dad meet?',
+    'What was your first job?',
+    'What were you like at my age?',
+    'What do you wish someone had told you sooner?',
+  ];
+  let askTarget = '';
+
+  function openAskComposer(name) {
+    askTarget = String(name || '').trim().slice(0, MAX_FROM);
+    const who = askTarget || 'them';
+    $('askEyebrow').textContent = askTarget ? `A question for ${askTarget}` : 'A question for later';
+    $('askTitle').textContent = `What do you want to ask ${who}?`;
+    $('askQuestion').value = '';
+    $('askForm').hidden = false;
+    $('askSent').hidden = true;
+    $('askIdeas').innerHTML = ASK_IDEAS.map(i => `<button type="button" class="ask-idea">${escapeHtml(i)}</button>`).join('');
+    $('askIdeas').querySelectorAll('.ask-idea').forEach(b => b.addEventListener('click', () => {
+      $('askQuestion').value = b.textContent;
+      $('askQuestion').focus();
+    }));
+    try { $('askFrom').value = localStorage.getItem('legacy_ask_from') || ''; } catch {}
+    $('askBackdrop').classList.add('open');
+  }
+  function closeAskComposer() { $('askBackdrop').classList.remove('open'); }
+
+  $('askSend').addEventListener('click', async () => {
+    const q = $('askQuestion').value.trim().slice(0, MAX_QUESTION);
+    const from = $('askFrom').value.trim().slice(0, MAX_FROM);
+    if (!q) { toast('Type a question first'); $('askQuestion').focus(); return; }
+    try { localStorage.setItem('legacy_ask_from', from); } catch {}
+    const params = new URLSearchParams({ ask: q });
+    if (from) params.set('from', from);
+    const url = `${appUrl()}?${params.toString()}`;
+    $('askLink').value = url;
+    $('askForm').hidden = true;
+    $('askSent').hidden = false;
+    await shareLink(url, `A question from ${from || 'family'}`,
+      `${from ? from + ' has' : "I've"} a question for your Legacy: "${q}"`);
+  });
+  $('askCopy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('askLink').value); toast('Link copied'); }
+    catch { $('askLink').select(); }
+  });
+  $('askAnother').addEventListener('click', () => openAskComposer(askTarget));
+  $('askOwn').addEventListener('click', () => { closeAskComposer(); showWelcomeIfFirstTime(); });
+
+  // Handle ?askme= and ?ask= on load. Returns true if the welcome screen should be skipped.
+  async function handleIncomingLink() {
+    const params = new URLSearchParams(location.search);
+    const askme = params.get('askme');
+    const ask = params.get('ask');
+    if (askme === null && !ask) return false;
+    try { history.replaceState(null, '', appUrl()); } catch {}
+
+    if (askme !== null) {
+      openAskComposer(askme);
+      return true;
+    }
+    const q = await addQuestion(ask, params.get('from'));
+    if (!q) return false;
+    try { localStorage.setItem('legacy_welcome_seen', '1'); } catch {}
+    renderAskBanner();
+    if (!q.answeredBy) {
+      await openModal();
+      pinQuestion(q);
+      toast(q.from ? `${q.from} asked you a question` : 'You have a new question');
+    }
+    return true;
+  }
+
+  // ============= WEEKLY REMINDER (.ics) =============
+  function icsEscape(s) { return String(s).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'); }
+  function icsStamp(d, utc) {
+    const p = (n) => String(n).padStart(2, '0');
+    return utc
+      ? `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`
+      : `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
+  }
+  function downloadReminder() {
+    // Next Sunday, 7pm local (floating time, so it follows the user's time zone).
+    const start = new Date();
+    start.setDate(start.getDate() + ((7 - start.getDay()) % 7 || 7));
+    start.setHours(19, 0, 0, 0);
+    const lines = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Legacy//Weekly reminder//EN', 'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:legacy-weekly-${Date.now()}@legacy`,
+      `DTSTAMP:${icsStamp(new Date(), true)}`,
+      `DTSTART:${icsStamp(start, false)}`,
+      'DURATION:PT15M',
+      'RRULE:FREQ=WEEKLY',
+      `SUMMARY:${icsEscape('Tell one story in Legacy')}`,
+      `DESCRIPTION:${icsEscape('Ten minutes, one memory. Open Legacy: ' + appUrl())}`,
+      `URL:${appUrl()}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEscape('Tell one story in Legacy')}`, 'TRIGGER:PT0M', 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR', '',
+    ];
+    downloadBlob(new Blob([lines.join('\r\n')], { type: 'text/calendar' }), 'legacy-weekly-reminder.ics');
+    toast('Open the file to add it to your calendar');
+  }
+  $('reminderBtn').addEventListener('click', downloadReminder);
 
   // ============= ADD/EDIT MEMORY MODAL =============
   async function openModal(editingId = null) {
@@ -671,7 +917,7 @@
     $('generalTags').innerHTML = '';
     resetPhoto();
     resetAudio();
-    showPromptSuggestion();
+    resetSuggestion();
     renderPromptState();
 
     showModal('addModal');
@@ -687,6 +933,7 @@
     (m.peopleTags || []).forEach(addPersonChip);
     (m.generalTags || []).forEach(addGeneralTagChip);
     state.draft.prompt = m.prompt || null;
+    state.draft.askedBy = m.askedBy || null;
     renderPromptState();
     if (m.hasImage) {
       const blob = await idbGet(STORE_IMAGES, editingId);
@@ -941,6 +1188,7 @@
       dateApproximate: !!date && $('dateApproxInput').checked,
       story,
       prompt: state.draft.prompt || null,
+      askedBy: state.draft.prompt ? (state.draft.askedBy || null) : null,
       peopleTags,
       generalTags,
       hasImage,
@@ -961,6 +1209,7 @@
       else if (!hasAudio) await idbDel(STORE_AUDIO, id);
       await saveMemory(memory);
       invalidateThumb(id);
+      if (state.draft.questionId) await markAnswered(state.draft.questionId, id);
 
       const isFirst = state.memories.length === 0;
       state.memories = await loadAllMemories();
@@ -990,7 +1239,9 @@
     html += `<h1 class="detail-title">${escapeHtml(m.title)}</h1>`;
 
     if (m.prompt && m.prompt !== m.title) {
-      html += `<p class="detail-prompt">${escapeHtml(m.prompt)}</p>`;
+      html += `<p class="detail-prompt">${m.askedBy ? `${escapeHtml(m.askedBy)} asked: ` : ''}${escapeHtml(m.prompt)}</p>`;
+    } else if (m.askedBy) {
+      html += `<p class="detail-prompt">Asked by ${escapeHtml(m.askedBy)}</p>`;
     }
 
     if (m.hasImage) {
@@ -1065,64 +1316,131 @@
     setTimeout(() => openModal(id), 300);
   }
 
-  // ============= EXPORT =============
-  async function exportAll() {
-    if (state.memories.length === 0) {
-      toast('No memories to export');
-      return;
-    }
-    toast('Preparing backup…');
-    const exportedAt = Date.now();
-    const payload = {
-      format: 'legacy-export',
-      schema_version: SCHEMA_VERSION,
-      exported_at: new Date(exportedAt).toISOString(),
-      user: { name: state.settings.name || null },
-      description: 'Legacy memory export. Images and audio are base64-encoded inline for portability. See docs/EXPORT_FORMAT.md.',
-      memories: []
-    };
-    for (const m of sortMemories(state.memories)) {
-      const out = { ...m };
-      if (m.hasImage) {
-        const blob = await idbGet(STORE_IMAGES, m.id);
-        if (blob) { out.imageData = await blobToBase64(blob); out.imageMime = blob.type || null; }
-      }
-      if (m.hasAudio) {
-        const blob = await idbGet(STORE_AUDIO, m.id);
-        if (blob) out.audioData = await blobToBase64(blob);
-      }
-      payload.memories.push(out);
-    }
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  // ============= EXPORT (archive .zip) =============
+  function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `legacy-memories-${todayISO()}.json`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     // Safari needs the URL alive briefly after click.
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-
-    state.meta.lastExportAt = exportedAt;
-    try { await saveMeta(state.meta); } catch (err) { console.error(err); }
-    renderBackupBanner();
-    if (isOpen('settingsModal')) renderBackupStatus();
-    toast(`Exported ${plural(payload.memories.length, 'memory', 'memories')}`);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
-  // ============= IMPORT =============
-  async function importFile(file) {
-    let payload;
-    try {
-      payload = JSON.parse(await file.text());
-    } catch {
-      toast("That file isn't a Legacy backup");
+  let exporting = false;
+  async function exportAll() {
+    if (exporting) return;
+    if (state.memories.length === 0) {
+      toast('No memories to export');
       return;
     }
+    const A = window.LegacyArchive;
+    exporting = true;
+    toast('Preparing archive…');
+    try {
+      const exportedAt = Date.now();
+      const folder = `legacy-archive-${todayISO()}`;
+      const files = [];
+      const records = [];
+
+      for (const m of sortMemories(state.memories)) {
+        const rec = { ...m };
+        if (m.hasImage) {
+          const blob = await idbGet(STORE_IMAGES, m.id);
+          if (blob) {
+            rec.image = `images/${m.id}.${A.extForMime(blob.type, 'jpg')}`;
+            rec.imageMime = blob.type || null;
+            files.push({ name: `${folder}/${rec.image}`, data: blob });
+          }
+        }
+        if (m.hasAudio) {
+          const blob = await idbGet(STORE_AUDIO, m.id);
+          if (blob) {
+            rec.audio = `audio/${m.id}.${A.extForMime(blob.type || m.audioMime, 'webm')}`;
+            files.push({ name: `${folder}/${rec.audio}`, data: blob });
+          }
+        }
+        records.push(rec);
+      }
+
+      const manifest = {
+        format: 'legacy-archive',
+        schema_version: SCHEMA_VERSION,
+        exported_at: new Date(exportedAt).toISOString(),
+        user: { name: state.settings.name || null },
+        plan: state.plan,
+        questions: state.questions,
+        description: 'Legacy archive. Media files live alongside this file; see docs/EXPORT_FORMAT.md.',
+        memories: records,
+      };
+      files.unshift(
+        { name: `${folder}/index.html`, data: A.bookHtml({ name: state.settings.name, exportedAt, memories: records, plan: state.plan }) },
+        { name: `${folder}/memories.json`, data: JSON.stringify(manifest, null, 2) },
+        { name: `${folder}/README.txt`, data: A.readmeText(state.settings.name, records.length) },
+      );
+
+      const zip = await A.buildZip(files);
+      downloadBlob(zip, `${folder}.zip`);
+
+      state.meta.lastExportAt = exportedAt;
+      try { await saveMeta(state.meta); } catch (err) { console.error(err); }
+      renderBackupBanner();
+      if (isOpen('settingsModal')) renderBackupStatus();
+      toast(`Archived ${plural(records.length, 'memory', 'memories')}`);
+    } catch (err) {
+      console.error(err);
+      toast('Export failed');
+    } finally {
+      exporting = false;
+    }
+  }
+
+  // ============= IMPORT (.zip archive or legacy .json) =============
+  async function importFile(file) {
+    const A = window.LegacyArchive;
+    let payload, getMedia;
+    const isZip = /\.zip$/i.test(file.name) || file.type === 'application/zip' || file.type === 'application/x-zip-compressed';
+
+    try {
+      if (isZip) {
+        const entries = await A.readZip(file);
+        const manifestName = [...entries.keys()]
+          .filter(n => /(^|\/)memories\.json$/.test(n))
+          .sort((a, b) => a.length - b.length)[0];
+        if (!manifestName) throw new Error('no memories.json');
+        const base = manifestName.slice(0, manifestName.length - 'memories.json'.length);
+        payload = JSON.parse(new TextDecoder().decode(await entries.get(manifestName)()));
+        const fromPath = async (path) => {
+          if (typeof path !== 'string' || !path) return null;
+          const get = entries.get(base + path);
+          if (!get) return null;
+          return new Blob([await get()], { type: A.mimeForPath(path) });
+        };
+        getMedia = async (rec) => {
+          const image = await fromPath(rec.image);
+          return {
+            image: image && rec.imageMime ? new Blob([image], { type: rec.imageMime }) : image,
+            audio: await fromPath(rec.audio),
+          };
+        };
+      } else {
+        payload = JSON.parse(await file.text());
+        getMedia = async (rec) => ({
+          image: typeof rec.imageData === 'string' ? dataUrlToBlob(rec.imageData) : null,
+          audio: typeof rec.audioData === 'string' ? dataUrlToBlob(rec.audioData) : null,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast("That file isn't a Legacy archive");
+      return;
+    }
+
     const incoming = payload && Array.isArray(payload.memories) ? payload.memories : null;
     if (!incoming) {
-      toast("That file isn't a Legacy backup");
+      toast("That file isn't a Legacy archive");
       return;
     }
 
@@ -1130,45 +1448,43 @@
     for (const raw of incoming) {
       try {
         if (!raw || typeof raw !== 'object') { failed++; continue; }
-        const { imageData, audioData, imageMime, ...rec } = raw;
-        rec.id = typeof rec.id === 'string' && rec.id ? rec.id : uuid();
+        const id = typeof raw.id === 'string' && raw.id ? raw.id : uuid();
 
-        const existing = await loadMemory(rec.id);
-        const incomingUpdated = rec.updated || rec.created || 0;
+        const existing = await loadMemory(id);
+        const incomingUpdated = raw.updated || raw.created || 0;
         if (existing && (existing.updated || existing.created || 0) >= incomingUpdated) {
           skipped++;
           continue;
         }
 
-        const imageBlob = typeof imageData === 'string' ? dataUrlToBlob(imageData) : null;
-        const audioBlob = typeof audioData === 'string' ? dataUrlToBlob(audioData) : null;
-
+        const { image: imageBlob, audio: audioBlob } = await getMedia(raw);
         const memory = {
-          id: rec.id,
+          id,
           schema_version: SCHEMA_VERSION,
-          userId: rec.userId || 'local_user',
-          title: rec.title || 'Untitled',
-          date: rec.date || null,
-          dateApproximate: !!rec.dateApproximate,
-          story: rec.story || '',
-          prompt: rec.prompt || null,
-          peopleTags: Array.isArray(rec.peopleTags) ? rec.peopleTags : [],
-          generalTags: Array.isArray(rec.generalTags) ? rec.generalTags : [],
+          userId: raw.userId || 'local_user',
+          title: raw.title || 'Untitled',
+          date: raw.date || null,
+          dateApproximate: !!raw.dateApproximate,
+          story: raw.story || '',
+          prompt: raw.prompt || null,
+          askedBy: raw.askedBy || null,
+          peopleTags: Array.isArray(raw.peopleTags) ? raw.peopleTags : [],
+          generalTags: Array.isArray(raw.generalTags) ? raw.generalTags : [],
           hasImage: !!imageBlob,
           hasAudio: !!audioBlob,
-          audioMime: audioBlob ? (rec.audioMime || audioBlob.type || null) : null,
-          preview: rec.preview || (rec.story ? String(rec.story).slice(0, 160) : ''),
-          created: rec.created || Date.now(),
+          audioMime: audioBlob ? (raw.audioMime || audioBlob.type || null) : null,
+          preview: raw.preview || (raw.story ? String(raw.story).slice(0, 160) : ''),
+          created: raw.created || Date.now(),
           updated: incomingUpdated || Date.now(),
           synced: false,
         };
 
-        if (imageBlob) await idbPut(STORE_IMAGES, memory.id, imageBlob);
-        else await idbDel(STORE_IMAGES, memory.id);
-        if (audioBlob) await idbPut(STORE_AUDIO, memory.id, audioBlob);
-        else await idbDel(STORE_AUDIO, memory.id);
+        if (imageBlob) await idbPut(STORE_IMAGES, id, imageBlob);
+        else await idbDel(STORE_IMAGES, id);
+        if (audioBlob) await idbPut(STORE_AUDIO, id, audioBlob);
+        else await idbDel(STORE_AUDIO, id);
         await saveMemory(memory);
-        invalidateThumb(memory.id);
+        invalidateThumb(id);
         existing ? updated++ : added++;
       } catch (err) {
         console.error('Import failed for record', raw && raw.id, err);
@@ -1176,13 +1492,28 @@
       }
     }
 
-    // Adopt the backup's name if this device doesn't have one yet.
+    // Adopt the archive's name / plan if this device doesn't have them yet.
     if (!state.settings.name && payload.user && payload.user.name) {
       state.settings.name = String(payload.user.name);
       try { await saveSettings(state.settings); } catch {}
       $('nameInput').value = state.settings.name;
       state.settingsDraft.name = state.settings.name;
       applyPersonalization();
+    }
+    if (payload.plan && typeof payload.plan === 'object' && isPlanEmpty(state.plan)) {
+      state.plan = { ...DEFAULT_PLAN, ...payload.plan };
+      try { await saveKey('plan', state.plan); } catch {}
+      if (isOpen('settingsModal')) fillPlanForm(state.plan);
+    }
+    if (Array.isArray(payload.questions)) {
+      let changed = false;
+      for (const q of payload.questions) {
+        if (!q || !q.id || !q.text) continue;
+        const mine = state.questions.find(x => x.id === q.id);
+        if (!mine) { state.questions.push({ ...q }); changed = true; }
+        else if (q.answeredBy && !mine.answeredBy) { mine.answeredBy = q.answeredBy; changed = true; }
+      }
+      if (changed) await saveQuestions();
     }
 
     state.memories = await loadAllMemories();
@@ -1196,7 +1527,7 @@
     if (updated) parts.push(`${updated} updated`);
     if (skipped) parts.push(`${skipped} already here`);
     if (failed) parts.push(`${failed} failed`);
-    toast(parts.length ? `Restore: ${parts.join(', ')}` : 'Backup was empty');
+    toast(parts.length ? `Restore: ${parts.join(', ')}` : 'Archive was empty');
   }
 
   $('importBtn').addEventListener('click', () => $('importInput').click());
@@ -1208,6 +1539,66 @@
     try { await importFile(file); }
     finally { $('importBtn').disabled = false; }
   });
+
+  // ============= LEGACY PLAN =============
+  function isPlanEmpty(p) {
+    return !p || (!p.recipients && !p.backupLocation && (!p.aiMode || p.aiMode === 'undecided'));
+  }
+  function fillPlanForm(p) {
+    $('planRecipients').value = p.recipients || '';
+    $('planLocation').value = p.backupLocation || '';
+    const mode = p.aiMode || 'undecided';
+    document.querySelectorAll('input[name="planAi"]').forEach(r => { r.checked = r.value === mode; });
+  }
+  function readPlanForm() {
+    const checked = document.querySelector('input[name="planAi"]:checked');
+    return {
+      recipients: $('planRecipients').value.trim(),
+      backupLocation: $('planLocation').value.trim(),
+      aiMode: checked ? checked.value : 'undecided',
+    };
+  }
+
+  function printLetter() {
+    const plan = readPlanForm();
+    const name = ($('nameInput').value || state.settings.name || '').trim();
+    const n = state.memories.length;
+    const last = state.meta.lastExportAt
+      ? new Date(state.meta.lastExportAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : null;
+    const wishes = window.LegacyArchive.AI_WISHES[plan.aiMode];
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    $('printLetter').innerHTML = `
+      <div class="letter">
+        <div class="letter-eyebrow">Legacy</div>
+        <h1>${name ? `${escapeHtml(name)}'s stories` : 'My stories'}</h1>
+        <p class="letter-date">${escapeHtml(today)}</p>
+        ${plan.recipients ? `<p>For ${escapeHtml(plan.recipients)}.</p>` : ''}
+        <p>I've been saving the stories of my life (photos, voice recordings, and the things I wanted you to know) in an app called Legacy. As of today there ${n === 1 ? 'is 1 memory' : `are ${n} memories`}.</p>
+        <h2>Where to find them</h2>
+        <p>${plan.backupLocation
+          ? `My latest archive is kept here: <strong>${escapeHtml(plan.backupLocation)}</strong>.`
+          : 'My latest archive is a file named <strong>legacy-archive-(date).zip</strong>. Look in my email, cloud storage, or computer downloads.'}
+          ${last ? `I last made one on ${escapeHtml(last)}.` : ''}</p>
+        <p>The stories may also still be on my phone, in the Legacy app on the home screen.</p>
+        <h2>How to open them</h2>
+        <ol>
+          <li>Unzip the archive file (double-click it on most computers).</li>
+          <li>Open the file called <strong>index.html</strong> in any web browser.</li>
+          <li>That's it. You don't need an app, an account, a password, or the internet. Photos are in the <em>images</em> folder and my recordings are in the <em>audio</em> folder.</li>
+        </ol>
+        ${wishes ? `<h2>My wishes about AI</h2><p>${escapeHtml(wishes)}</p>` : ''}
+        <p class="letter-sign">With love,</p>
+        <p class="letter-name">${escapeHtml(name || '')}</p>
+      </div>`;
+    document.body.classList.add('printing');
+    const done = () => { document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    window.print();
+    setTimeout(done, 1000);
+  }
+  $('printLetterBtn').addEventListener('click', printLetter);
 
   // ============= WIRING =============
   $('fab').addEventListener('click', () => openModal());
@@ -1245,6 +1636,7 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if ($('askBackdrop').classList.contains('open')) return;  // don't lose a half-typed question
     if ($('welcomeBackdrop').classList.contains('open')) { dismissWelcome(); return; }
     closeAll();
   });
@@ -1255,11 +1647,14 @@
       await openDB();
       state.settings = await loadSettings();
       state.meta = await loadMeta();
+      state.questions = await loadKey('questions', []);
+      state.plan = { ...DEFAULT_PLAN, ...(await loadKey('plan', {})) };
       state.memories = await loadAllMemories();
       applyPersonalization();
       refreshDatalists();
       await renderList();
-      showWelcomeIfFirstTime();
+      const handled = await handleIncomingLink();
+      if (!handled) showWelcomeIfFirstTime();
       if (state.memories.length) requestPersistence();
     } catch (err) {
       console.error('Init failed', err);

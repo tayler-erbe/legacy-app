@@ -1265,3 +1265,84 @@ textarea:focus { border-color: var(--burnt); }
   outline: 2px solid var(--burnt);
   outline-offset: 2px;
 }
+
+/* ============= Family questions ============= */
+.ask-banner { background: var(--ink); color: var(--paper); }
+.ask-banner .banner-btn { background: var(--burnt); }
+.ask-banner-from {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--burnt-soft);
+  margin-bottom: 4px;
+}
+.ask-banner-q { font-style: italic; font-size: 16px; line-height: 1.4; }
+.prompt-card.is-question { border-style: solid; border-color: var(--burnt); }
+.prompt-btn-quiet { border-color: transparent; color: var(--muted); margin-right: auto; }
+.prompt-pinned-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.prompt-pinned-body[hidden], .prompt-pinned-from[hidden] { display: none; }
+.prompt-pinned-from {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--burnt);
+}
+.chat-invite { margin-top: 10px; }
+
+/* Ask composer */
+.ask-card { text-align: left; }
+.ask-title { font-size: 32px; }
+.ask-form, .ask-sent { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.ask-form[hidden], .ask-sent[hidden] { display: none; }
+.ask-form textarea { min-height: 110px; }
+.ask-ideas { display: flex; flex-wrap: wrap; gap: 6px; }
+.ask-idea {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  background: var(--cream);
+  color: var(--ink);
+  border: none;
+  border-radius: 14px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.ask-sent p { font-size: 15px; line-height: 1.5; }
+.ask-sent input { font-family: var(--mono); font-size: 12px; }
+.ask-sent-actions { display: flex; gap: 8px; }
+.ask-own { display: block; margin: 18px auto 0; }
+
+/* ============= Settings extras ============= */
+.backup-actions-stack { flex-direction: column; }
+.plan-panel { display: flex; flex-direction: column; gap: 4px; }
+.plan-label {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+  margin-top: 10px;
+}
+.plan-label:first-child { margin-top: 0; }
+.plan-ai { border: none; margin-top: 8px; }
+.plan-ai .check-row { align-items: flex-start; color: var(--ink); line-height: 1.4; }
+.plan-ai .check-row input { margin-top: 2px; flex-shrink: 0; }
+.plan-print { margin-top: 16px; }
+
+/* ============= Printable letter ============= */
+#printLetter { display: none; }
+@media print {
+  body.printing { background: #fff; padding: 0; }
+  body.printing::before { display: none; }
+  body.printing > *:not(#printLetter) { display: none !important; }
+  body.printing #printLetter { display: block; }
+  .letter { max-width: 6.5in; margin: 0 auto; font-family: Georgia, serif; font-size: 13pt; line-height: 1.6; color: #000; }
+  .letter-eyebrow { font-family: var(--mono); font-size: 9pt; letter-spacing: 0.2em; text-transform: uppercase; color: #555; }
+  .letter h1 { font-weight: 400; font-style: italic; font-size: 30pt; margin: 6pt 0 2pt; }
+  .letter h2 { font-size: 14pt; margin: 18pt 0 4pt; }
+  .letter p, .letter li { margin: 0 0 8pt; }
+  .letter ol { padding-left: 22pt; }
+  .letter-date { color: #555; margin-bottom: 18pt !important; }
+  .letter-sign { margin-top: 24pt !important; }
+  .letter-name { font-style: italic; font-size: 16pt; }
+}

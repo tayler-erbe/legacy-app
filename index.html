@@ -72,6 +72,14 @@
       <button class="banner-btn" id="backupBannerBtn">Back up</button>
     </div>
 
+    <div class="banner ask-banner" id="askBanner" hidden>
+      <div class="banner-text">
+        <div class="ask-banner-from" id="askBannerFrom"></div>
+        <div class="ask-banner-q" id="askBannerQ"></div>
+      </div>
+      <button class="banner-btn" id="askBannerBtn">Answer</button>
+    </div>
+
     <div class="on-this-day" id="onThisDay" hidden></div>
 
     <div class="memories" id="memoryList"></div>
@@ -106,6 +114,7 @@
         Every memory you add makes this conversation richer when it opens.
       </p>
       <button class="btn-ghost" id="addFromChatBtn">Add a memory</button>
+      <button class="btn-ghost chat-invite" id="inviteFromChatBtn">Invite family to ask you questions</button>
     </div>
   </section>
 
@@ -141,6 +150,33 @@
     <button class="btn-primary welcome-cta" id="welcomeCta">Get started</button>
   </div>
 </div>
+
+<!-- Ask composer (opened from an ?askme= link) -->
+<div class="welcome-backdrop" id="askBackdrop">
+  <div class="welcome-card ask-card">
+    <div class="welcome-eyebrow" id="askEyebrow">A question for later</div>
+    <h2 class="welcome-title ask-title" id="askTitle">What do you want to ask?</h2>
+    <p class="welcome-intro" id="askIntro">Ask about a day, a person, a decision. They'll answer in their own voice, and the answer is saved for good.</p>
+    <div class="ask-form" id="askForm">
+      <textarea id="askQuestion" maxlength="500" placeholder="How did you and Dad meet?"></textarea>
+      <div class="ask-ideas" id="askIdeas"></div>
+      <input type="text" id="askFrom" maxlength="60" placeholder="Your name (so they know who's asking)">
+      <button class="btn-primary welcome-cta" id="askSend">Send question</button>
+    </div>
+    <div class="ask-sent" id="askSent" hidden>
+      <p>Send this link to them however you usually talk: text, email, anything.</p>
+      <input type="text" id="askLink" readonly>
+      <div class="ask-sent-actions">
+        <button class="btn-secondary" id="askCopy">Copy link</button>
+        <button class="btn-secondary" id="askAnother">Ask another</button>
+      </div>
+    </div>
+    <button class="link-btn ask-own" id="askOwn">Start your own Legacy instead</button>
+  </div>
+</div>
+
+<!-- Printable family letter (only visible when printing) -->
+<div id="printLetter" aria-hidden="true"></div>
 
 <!-- Shared modal backdrop -->
 <div class="modal-backdrop" id="modalBackdrop"></div>
@@ -179,6 +215,9 @@
       <h3 class="about-h3">Your data</h3>
       <p>Right now everything is stored privately on this device. Nothing is uploaded anywhere. Use the export button (top right of the Memories tab) to download a full backup — photos, audio, and all — at any time. You can restore that file on any device from <strong>Settings → Backup &amp; restore</strong>.</p>
       <p>Browsers can clear website data when a phone runs low on space, so keep a recent backup somewhere safe — email it to yourself, or save it to cloud storage.</p>
+
+      <h3 class="about-h3">Our promise</h3>
+      <p>Apps that promise "forever" have a habit of shutting down. Legacy is built so that never matters. Your archive is a plain folder of web pages, photos, and audio that opens in any browser, with no app and no account. Your stories are never for sale, never used to train AI, and if this project ever winds down, you will get notice and a full export first.</p>
 
       <h3 class="about-h3">One small note</h3>
       <p>You don't have to write a perfect story. Imperfect is more real. Just the way you'd tell it out loud is enough.</p>
@@ -221,11 +260,40 @@
           <div class="backup-status" id="backupStatus">Never backed up</div>
           <div class="storage-status" id="storageStatus"></div>
           <div class="backup-actions">
-            <button type="button" class="btn-secondary btn-compact" id="settingsExportBtn">Download backup</button>
-            <button type="button" class="btn-secondary btn-compact" id="importBtn">Restore from file</button>
+            <button type="button" class="btn-secondary btn-compact" id="settingsExportBtn">Download archive</button>
+            <button type="button" class="btn-secondary btn-compact" id="importBtn">Restore</button>
           </div>
-          <input type="file" id="importInput" accept="application/json,.json" hidden>
-          <p class="backup-hint">Restoring merges a backup into this device. Memories that already exist are kept unless the backup has a newer version.</p>
+          <input type="file" id="importInput" accept=".zip,application/zip,application/json,.json" hidden>
+          <p class="backup-hint">The archive is a .zip. Unzip it and open <em>index.html</em> to read every story in any browser, no app needed. Restoring merges an archive (or an older .json backup) into this device; existing memories are kept unless the archive has a newer version.</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Keep the stories coming</label>
+        <div class="backup-panel">
+          <div class="backup-actions backup-actions-stack">
+            <button type="button" class="btn-secondary btn-compact" id="inviteBtn">Invite family to ask you questions</button>
+            <button type="button" class="btn-secondary btn-compact" id="reminderBtn">Add a weekly reminder to my calendar</button>
+          </div>
+          <p class="backup-hint">Family get a link where they type a question. It comes back to you as a link that opens Legacy with their question ready to answer.</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your legacy plan</label>
+        <div class="backup-panel plan-panel">
+          <label class="plan-label" for="planRecipients">Who should receive these stories?</label>
+          <input type="text" id="planRecipients" placeholder="Sarah and Michael, my grandchildren">
+          <label class="plan-label" for="planLocation">Where will your latest archive be kept?</label>
+          <input type="text" id="planLocation" placeholder="Google Drive folder “Legacy”, USB stick in the desk">
+          <fieldset class="plan-ai">
+            <legend class="plan-label">AI and your stories</legend>
+            <label class="check-row"><input type="radio" name="planAi" value="undecided"> <span>I haven't decided yet</span></label>
+            <label class="check-row"><input type="radio" name="planAi" value="archive"> <span>Archive only. Never use AI with my stories.</span></label>
+            <label class="check-row"><input type="radio" name="planAi" value="grounded"> <span>Family may ask questions, answered only with my own recordings and words. Never invent things I didn't say.</span></label>
+          </fieldset>
+          <button type="button" class="btn-secondary btn-compact plan-print" id="printLetterBtn">Print a letter for my family</button>
+          <p class="backup-hint">The letter explains where your stories are and how to open them, with no app or account. Keep it with your will or important papers. Your plan is also saved inside every archive.</p>
         </div>
       </div>
       <div class="form-group">
@@ -258,15 +326,19 @@
 
     <div class="modal-body">
       <div class="prompt-card" id="promptCard">
-        <div class="prompt-eyebrow">Need a starting point?</div>
+        <div class="prompt-eyebrow" id="promptEyebrow">Need a starting point?</div>
         <p class="prompt-text" id="promptText"></p>
         <div class="prompt-actions">
+          <button type="button" class="prompt-btn prompt-btn-quiet" id="promptDismiss" hidden>Remove</button>
           <button type="button" class="prompt-btn" id="promptShuffle">Another</button>
           <button type="button" class="prompt-btn prompt-btn-primary" id="promptUse">Answer this</button>
         </div>
       </div>
       <div class="prompt-pinned" id="promptPinned" hidden>
-        <span class="prompt-pinned-text" id="promptPinnedText"></span>
+        <span class="prompt-pinned-body">
+          <span class="prompt-pinned-from" id="promptPinnedFrom" hidden></span>
+          <span class="prompt-pinned-text" id="promptPinnedText"></span>
+        </span>
         <button type="button" class="prompt-unpin" id="promptUnpin" aria-label="Remove prompt">×</button>
       </div>
 
@@ -368,6 +440,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="./archive.js"></script>
 <script src="./app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

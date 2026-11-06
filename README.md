@@ -18,10 +18,19 @@ Nothing is uploaded, and there's no account.
   person or tag on a memory to see every memory with them.
 - **On this day**: memories from today's date in earlier years show up at the
   top of the list.
-- **Back up & restore**: download everything (photos and audio included) as
-  one readable JSON file, and restore it on any device from
-  *Settings → Backup & restore*. The app reminds you when memories pile up
-  without a backup.
+- **Family questions**: share an "ask me" link. Family type a question, and
+  it comes back to you as a link that opens Legacy with their question ready
+  to answer, credited to them.
+- **An archive that outlives the app**: download everything as a `.zip`.
+  Unzip it and open `index.html` to read every story, with photos and
+  recordings, in any browser, forever. No app or account. The same file
+  restores into Legacy on any device. The app reminds you when memories pile
+  up without a backup.
+- **A legacy plan**: say who the stories are for, where your archive lives,
+  and whether AI may ever be used with them. Print a one-page letter for your
+  family that explains how to open everything.
+- **Weekly reminder**: one tap adds a recurring "tell one story" event to your
+  calendar.
 - **Works offline** and installs to the home screen on iOS and Android.
 
 ## Running it
@@ -43,13 +52,15 @@ Pushing to `main` deploys to GitHub Pages via `.github/workflows/pages.yml`.
 | Path                    | What |
 |-------------------------|------|
 | `index.html`            | Markup for every screen and modal. |
-| `app.js`                | All app logic: IndexedDB storage, rendering, capture, search, export/import. |
+| `app.js`                | App logic: IndexedDB storage, rendering, capture, search, questions, import, legacy plan. |
+| `archive.js`            | Zero-dependency zip writer/reader and the offline book generator. |
 | `styles.css`            | Styles. Design tokens live in `:root`. |
 | `service-worker.js`     | Offline support. Network-first for the app, cache-first for fonts. |
 | `manifest.webmanifest`  | PWA install metadata. |
 | `icons/`                | App icons. |
 | `docs/ARCHITECTURE.md`  | Design principles and the roadmap (backend, AI chat, launch). |
-| `docs/EXPORT_FORMAT.md` | The versioned backup file format. |
+| `docs/EXPORT_FORMAT.md` | The versioned archive format. |
+| `docs/COMPETITIVE_LANDSCAPE.md` | Market research and where Legacy can win. |
 
 ## Your data
 
@@ -58,8 +69,9 @@ browser to mark that storage as persistent. Still, browsers (Safari especially)
 can clear site data under storage pressure, and deleting the app from your home
 screen deletes its data. **Keep a recent backup somewhere safe.**
 
-The backup format is documented in [`docs/EXPORT_FORMAT.md`](docs/EXPORT_FORMAT.md),
-so your memories stay readable even without this app.
+The archive format is documented in [`docs/EXPORT_FORMAT.md`](docs/EXPORT_FORMAT.md).
+The archive is plain HTML, JSON, and media files, so your memories stay readable
+even if this app disappears.
 
 ## Roadmap
 

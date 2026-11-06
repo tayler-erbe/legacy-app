@@ -182,12 +182,12 @@ Ordered by leverage. ✅ marks items already shipped.
 
 ### A. Make stories actually get told (the completion problem)
 - ✅ One-moment capture, voice-first, story prompts.
-- **"Ask me" links.** Anyone in the family can send a link like
+- ✅ **"Ask me" links.** Anyone in the family can send a link like
   `…/?ask=How did you meet Dad?`, which opens Legacy with that question
   pinned. No backend needed. Questions from your own daughter beat generic
   prompts, and it turns a solo chore into a family conversation.
   Storyworth and Remento are one-directional.
-- **Gentle rhythm without email.** A "remind me weekly" button that adds a
+- ✅ **Gentle rhythm without email.** A "remind me weekly" button that adds a
   recurring calendar event (an `.ics` file). It works offline, needs no
   server, and avoids the "the emails just stopped" failure.
 - **Continuous, not a one-year box.** No arbitrary end date. Seasonal "On this
@@ -196,17 +196,17 @@ Ordered by leverage. ✅ marks items already shipped.
 ### B. Survive anything
 - ✅ Local-first storage, open JSON export, restore, persistent storage, backup
   nudges.
-- **Offline "book" export.** A zip containing `index.html`, `images/` and
+- ✅ **Offline "book" export.** A zip containing `index.html`, `images/` and
   `audio/` that reads like a beautiful book in any browser, forever, with no
   app. This is the answer to HereAfter and StoryFile, and it doubles as a
   shareable digital edition.
-- A public **shutdown promise** in the terms of service.
+- ✅ A **shutdown promise** in the About screen. *(Still needed: the same promise in real terms of service.)*
 
 ### C. Keep their real voice
 - Raw audio plus a verbatim transcript as the permanent record. An optional,
   labelled "tidied" version. A side-by-side view so nothing drifts.
 
-### D. A legacy plan, built in
+### D. A legacy plan, built in ✅ *(the retire option arrives with the chat)*
 - In Settings, name **who** gets the vault, **when** (on request, after death,
   or on a date), and **what mode**:
   1. archive only;

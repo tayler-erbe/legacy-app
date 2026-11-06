@@ -33,7 +33,10 @@ This document captures the design decisions behind Legacy and the planned path f
 - Photo, title, date (exact or approximate), audio, story, people, tags.
 - Story prompts to help start a memory.
 - Search across titles, stories, people and tags; "On this day" resurfacing.
-- Full export to JSON **and restore from that file** (merge by `updated` timestamp). Format: [`EXPORT_FORMAT.md`](./EXPORT_FORMAT.md).
+- Archive export as a `.zip` with an offline, app-free `index.html` book, **and restore** (merge by `updated` timestamp; older JSON backups also restore). Format: [`EXPORT_FORMAT.md`](./EXPORT_FORMAT.md).
+- Family "ask me" links (no backend: the question travels in the URL).
+- Legacy plan (recipients, archive location, AI consent) plus a printable family letter.
+- Weekly reminder via a calendar (`.ics`) file.
 - Backup nudges and a persistent-storage request so the browser doesn't evict the vault.
 - iOS Safari install to home screen; works offline (network-first service worker).
 

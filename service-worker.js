@@ -11,11 +11,12 @@
  * IndexedDB (memories, images, audio) is NEVER touched here — it lives in the
  * browser storage layer and is not fetched over HTTP.
  */
-const CACHE_VERSION = 'legacy-v2';
+const CACHE_VERSION = 'legacy-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
   './styles.css',
+  './archive.js',
   './app.js',
   './manifest.webmanifest',
   './icons/icon-32.png',
