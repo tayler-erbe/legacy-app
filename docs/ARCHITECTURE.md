@@ -30,9 +30,12 @@ This document captures the design decisions behind Legacy and the planned path f
 
 **Scope**:
 - Create, read, edit, delete memories.
-- Photo, title, date, audio, story, people, tags.
-- Full export to JSON.
-- iOS Safari install to home screen.
+- Photo, title, date (exact or approximate), audio, story, people, tags.
+- Story prompts to help start a memory.
+- Search across titles, stories, people and tags; "On this day" resurfacing.
+- Full export to JSON **and restore from that file** (merge by `updated` timestamp). Format: [`EXPORT_FORMAT.md`](./EXPORT_FORMAT.md).
+- Backup nudges and a persistent-storage request so the browser doesn't evict the vault.
+- iOS Safari install to home screen; works offline (network-first service worker).
 
 **Intentionally not in scope**:
 - Auth, accounts, multi-device sync.

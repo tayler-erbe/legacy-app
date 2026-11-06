@@ -46,7 +46,7 @@
   <!-- MEMORIES TAB -->
   <section class="tab-panel active" id="tabMemories">
     <div class="toolbar">
-      <div class="count"><strong id="memoryCount">0</strong> memories</div>
+      <div class="count"><strong id="memoryCount">0</strong> <span id="memoryCountLabel">memories</span></div>
       <div class="toolbar-actions">
         <button class="icon-btn" id="exportBtn" title="Export all memories" aria-label="Export">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -57,6 +57,22 @@
         </button>
       </div>
     </div>
+
+    <div class="search-wrap" id="searchWrap" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="search" id="searchInput" placeholder="Search stories, people, tags" aria-label="Search memories" autocomplete="off">
+      <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+    </div>
+
+    <div class="banner backup-banner" id="backupBanner" hidden>
+      <div class="banner-text"><strong id="backupBannerCount">0</strong> <span id="backupBannerLabel">memories aren't backed up yet.</span></div>
+      <button class="banner-btn" id="backupBannerBtn">Back up</button>
+    </div>
+
+    <div class="on-this-day" id="onThisDay" hidden></div>
 
     <div class="memories" id="memoryList"></div>
 
@@ -161,7 +177,8 @@
       <p>The memories you save become the foundation for a second layer — an AI trained to tell your stories back in your own voice. Open the <strong>Chat</strong> tab to see where it's headed. It's still being built.</p>
 
       <h3 class="about-h3">Your data</h3>
-      <p>Right now everything is stored privately on this device. Nothing is uploaded anywhere. Use the export button (top right of the Memories tab) to download a full backup — photos, audio, and all — at any time.</p>
+      <p>Right now everything is stored privately on this device. Nothing is uploaded anywhere. Use the export button (top right of the Memories tab) to download a full backup — photos, audio, and all — at any time. You can restore that file on any device from <strong>Settings → Backup &amp; restore</strong>.</p>
+      <p>Browsers can clear website data when a phone runs low on space, so keep a recent backup somewhere safe — email it to yourself, or save it to cloud storage.</p>
 
       <h3 class="about-h3">One small note</h3>
       <p>You don't have to write a perfect story. Imperfect is more real. Just the way you'd tell it out loud is enough.</p>
@@ -199,6 +216,19 @@
         <input type="text" id="nameInput" placeholder="What should we call you?">
       </div>
       <div class="form-group">
+        <label class="form-label">Backup &amp; restore</label>
+        <div class="backup-panel">
+          <div class="backup-status" id="backupStatus">Never backed up</div>
+          <div class="storage-status" id="storageStatus"></div>
+          <div class="backup-actions">
+            <button type="button" class="btn-secondary btn-compact" id="settingsExportBtn">Download backup</button>
+            <button type="button" class="btn-secondary btn-compact" id="importBtn">Restore from file</button>
+          </div>
+          <input type="file" id="importInput" accept="application/json,.json" hidden>
+          <p class="backup-hint">Restoring merges a backup into this device. Memories that already exist are kept unless the backup has a newer version.</p>
+        </div>
+      </div>
+      <div class="form-group">
         <div class="transcribe-note">
           <strong>How this is used</strong>
           Your name appears in the chat tab ("Talk to [name]") and as a greeting when you open the app. Your photo shows on the chat screen. Nothing is sent anywhere — it lives on this device only.
@@ -227,6 +257,19 @@
     </header>
 
     <div class="modal-body">
+      <div class="prompt-card" id="promptCard">
+        <div class="prompt-eyebrow">Need a starting point?</div>
+        <p class="prompt-text" id="promptText"></p>
+        <div class="prompt-actions">
+          <button type="button" class="prompt-btn" id="promptShuffle">Another</button>
+          <button type="button" class="prompt-btn prompt-btn-primary" id="promptUse">Answer this</button>
+        </div>
+      </div>
+      <div class="prompt-pinned" id="promptPinned" hidden>
+        <span class="prompt-pinned-text" id="promptPinnedText"></span>
+        <button type="button" class="prompt-unpin" id="promptUnpin" aria-label="Remove prompt">×</button>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Photo</label>
         <div class="photo-drop" id="photoDrop">
@@ -238,6 +281,7 @@
           <div class="drop-text">Tap to add a photo</div>
           <input type="file" id="photoInput" accept="image/*">
         </div>
+        <button type="button" class="link-btn" id="removePhotoBtn" hidden>Remove photo</button>
       </div>
 
       <div class="form-group">
@@ -248,6 +292,10 @@
       <div class="form-group">
         <label class="form-label">When</label>
         <input type="date" id="dateInput">
+        <label class="check-row">
+          <input type="checkbox" id="dateApproxInput">
+          <span>I'm not sure of the exact day</span>
+        </label>
       </div>
 
       <div class="form-group">
@@ -259,7 +307,7 @@
           </button>
           <div class="audio-preview" id="audioPreview">
             <audio controls id="audioPlayback"></audio>
-            <div class="audio-hint">You can keep this audio, or re-record.</div>
+            <div class="audio-hint">You can keep this audio, or re-record. <button type="button" class="link-btn link-inline" id="removeAudioBtn">Remove audio</button></div>
           </div>
         </div>
         <textarea id="storyInput" placeholder="Or write it here. Tell it the way you'd tell it out loud."></textarea>
@@ -273,7 +321,7 @@
         <label class="form-label">Who was there</label>
         <div class="tag-row" id="peopleTags"></div>
         <div class="tag-input-wrap" style="margin-top: 10px;">
-          <input type="text" id="peopleInput" placeholder="Add a name">
+          <input type="text" id="peopleInput" placeholder="Add a name" list="peopleList" autocomplete="off">
           <button type="button" id="addPersonBtn">Add</button>
         </div>
       </div>
@@ -282,7 +330,7 @@
         <label class="form-label">Tags</label>
         <div class="tag-row" id="generalTags"></div>
         <div class="tag-input-wrap" style="margin-top: 10px;">
-          <input type="text" id="tagInput" placeholder="beach, summer, first time">
+          <input type="text" id="tagInput" placeholder="beach, summer, first time" list="tagList" autocomplete="off">
           <button type="button" id="addTagBtn">Add</button>
         </div>
       </div>
@@ -315,7 +363,10 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<datalist id="peopleList"></datalist>
+<datalist id="tagList"></datalist>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="./app.js"></script>
 <script>
