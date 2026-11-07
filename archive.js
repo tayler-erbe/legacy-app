@@ -217,10 +217,13 @@
 <article class="memory" id="m${i}">
   <div class="date">${esc(bookDate(m))}</div>
   <h2>${esc(m.title || 'Untitled')}</h2>
+  ${m.recipient ? `<p class="for">For ${esc(m.recipient)}${m.occasion ? ` · ${esc(m.occasion)}` : ''}</p>` : ''}
   ${asked}
   ${m.image ? `<img src="${esc(m.image)}" alt="${esc(m.title || '')}">` : ''}
   ${m.audio ? `<audio controls preload="none" src="${esc(m.audio)}"></audio><p class="file-note">Recording: <a href="${esc(m.audio)}">${esc(m.audio)}</a></p>` : ''}
   <div class="story">${storyHtml(m.story)}</div>
+  ${(m.photos || []).length ? `<div class="gallery">${m.photos.map(p => `<figure><img src="${esc(p.path)}" alt="" loading="lazy">${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ''}</figure>`).join('')}</div>` : ''}
+  ${(m.followUps || []).length ? `<div class="follow">${m.followUps.map(f => `<p class="fq">${esc(f.q)}</p>${storyHtml(f.a)}`).join('')}</div>` : ''}
   ${people ? `<p class="meta"><strong>With</strong> ${people}</p>` : ''}
   ${tags ? `<p class="meta">${tags}</p>` : ''}
 </article>`;
@@ -262,6 +265,12 @@
   .file-note { color:var(--muted); margin:0 0 16px; }
   .file-note a { color:var(--muted); }
   .meta { font-size:15px; color:var(--muted); }
+  .for { font-family: ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--burnt); margin:0 0 8px; }
+  .gallery figure { margin: 0 0 20px; }
+  .gallery img { margin-bottom: 6px; }
+  figcaption { font-size:15px; font-style:italic; color:var(--muted); }
+  .follow { border-left: 3px solid var(--warm); padding-left: 16px; margin-top: 16px; }
+  .fq { font-style:italic; color:var(--muted); margin: 16px 0 4px; }
   .tag { display:inline-block; font-family: ui-monospace, monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; background:rgba(10,22,40,.05); padding:2px 8px; margin: 2px 2px 2px 0; }
   footer { margin-top:48px; padding-top:24px; border-top:1px solid var(--line); font-size:14px; color:var(--muted); font-style:italic; }
   @media print { body { background:#fff; } audio, .file-note { display:none; } nav { page-break-after: always; } }
@@ -284,7 +293,7 @@ ${toc}
 ${body}
   <footer>
     This book was exported from Legacy. It needs no app, account, or internet connection.
-    Photos are in the <em>images</em> folder and recordings in the <em>audio</em> folder.
+    Photos are in the <em>images</em> and <em>photos</em> folders, and recordings in the <em>audio</em> folder.
     <em>memories.json</em> holds everything in a machine-readable form.
   </footer>
 </main>
@@ -302,7 +311,8 @@ ${body}
       '',
       "WHAT'S INSIDE",
       '  index.html     a readable book of every memory',
-      '  images/        the original photos',
+      '  images/        the main photo of each memory',
+      '  photos/        photo collections, at full original quality',
       '  audio/         the original voice recordings',
       '  memories.json  every memory as structured data (for restoring or moving to another tool)',
       '',

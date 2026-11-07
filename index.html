@@ -77,7 +77,10 @@
         <div class="ask-banner-from" id="askBannerFrom"></div>
         <div class="ask-banner-q" id="askBannerQ"></div>
       </div>
-      <button class="banner-btn" id="askBannerBtn">Answer</button>
+      <div class="banner-actions">
+        <button class="banner-btn" id="askBannerBtn">Answer</button>
+        <button class="banner-dismiss" id="askBannerDismiss">Not this one</button>
+      </div>
     </div>
 
     <div class="on-this-day" id="onThisDay" hidden></div>
@@ -90,6 +93,25 @@
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
     </button>
+  </section>
+
+  <!-- PHOTOS TAB -->
+  <section class="tab-panel" id="tabPhotos">
+    <div class="photos-intro">
+      <div class="photos-eyebrow">From your camera roll</div>
+      <h2 class="photos-title">Every photo has a story only you can tell.</h2>
+      <p class="photos-desc">Bring in photos from your phone. Legacy sorts them into days and trips using the date and place saved inside each photo. Then you pick a moment and tell its story. Nothing leaves this device.</p>
+      <button class="btn-primary photos-import-btn" id="photoImportBtn">Choose photos</button>
+      <input type="file" id="photoImportInput" accept="image/*" multiple hidden>
+      <div class="import-progress" id="importProgress" hidden>
+        <div class="import-bar"><div class="import-bar-fill" id="importBarFill"></div></div>
+        <div class="import-label" id="importLabel"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="count"><strong id="bucketCount">0</strong> <span id="bucketCountLabel">moments waiting for a story</span></div>
+    </div>
+    <div class="bucket-list" id="bucketList"></div>
   </section>
 
   <!-- CHAT TAB -->
@@ -126,6 +148,15 @@
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
       </svg>
       <span>Memories</span>
+    </button>
+    <button class="nav-item" data-tab="photos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </svg>
+      <span>Photos</span>
+      <span class="nav-badge" id="photosBadge" hidden></span>
     </button>
     <button class="nav-item" data-tab="chat">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -260,11 +291,14 @@
           <div class="backup-status" id="backupStatus">Never backed up</div>
           <div class="storage-status" id="storageStatus"></div>
           <div class="backup-actions">
-            <button type="button" class="btn-secondary btn-compact" id="settingsExportBtn">Download archive</button>
-            <button type="button" class="btn-secondary btn-compact" id="importBtn">Restore</button>
+            <button type="button" class="btn-secondary btn-compact" id="settingsExportBtn">Full archive</button>
+            <button type="button" class="btn-secondary btn-compact" id="familyExportBtn">Family edition</button>
+          </div>
+          <div class="backup-actions">
+            <button type="button" class="btn-secondary btn-compact" id="importBtn">Restore from an archive</button>
           </div>
           <input type="file" id="importInput" accept=".zip,application/zip,application/json,.json" hidden>
-          <p class="backup-hint">The archive is a .zip. Unzip it and open <em>index.html</em> to read every story in any browser, no app needed. Restoring merges an archive (or an older .json backup) into this device; existing memories are kept unless the archive has a newer version.</p>
+          <p class="backup-hint">The <strong>full archive</strong> has everything and is your backup. The <strong>family edition</strong> leaves out anything marked "Just me", so it's ready to hand on. Either is a .zip. Unzip it and open <em>index.html</em> to read every story in any browser, no app needed. Restoring merges an archive (or an older .json backup) into this device; existing memories are kept unless the archive has a newer version.</p>
         </div>
       </div>
 
@@ -324,16 +358,15 @@
       </button>
     </header>
 
-    <div class="modal-body">
-      <div class="prompt-card" id="promptCard">
-        <div class="prompt-eyebrow" id="promptEyebrow">Need a starting point?</div>
-        <p class="prompt-text" id="promptText"></p>
-        <div class="prompt-actions">
-          <button type="button" class="prompt-btn prompt-btn-quiet" id="promptDismiss" hidden>Remove</button>
-          <button type="button" class="prompt-btn" id="promptShuffle">Another</button>
-          <button type="button" class="prompt-btn prompt-btn-primary" id="promptUse">Answer this</button>
-        </div>
-      </div>
+    <div class="modal-body guide-step" id="guideStep" hidden>
+      <button type="button" class="guide-back" id="guideBack" hidden>← Back</button>
+      <h3 class="guide-title" id="guideTitle">What do you feel like sharing today?</h3>
+      <p class="guide-sub" id="guideSub"></p>
+      <div class="guide-body" id="guideBody"></div>
+      <button type="button" class="link-btn guide-skip" id="guideSkip">Skip and just start</button>
+    </div>
+
+    <div class="modal-body" id="formStep">
       <div class="prompt-pinned" id="promptPinned" hidden>
         <span class="prompt-pinned-body">
           <span class="prompt-pinned-from" id="promptPinnedFrom" hidden></span>
@@ -356,10 +389,26 @@
         <button type="button" class="link-btn" id="removePhotoBtn" hidden>Remove photo</button>
       </div>
 
+      <div class="form-group" id="galleryGroup">
+        <label class="form-label" id="galleryLabel">More photos</label>
+        <p class="field-hint" id="galleryHint" hidden>Scroll through and add a note to any photo. Who's in the background? What happened just before?</p>
+        <div class="gallery-edit" id="galleryEdit"></div>
+        <button type="button" class="link-btn" id="addGalleryBtn">+ Add more photos</button>
+        <input type="file" id="galleryInput" accept="image/*" multiple hidden>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Title</label>
         <input type="text" id="titleInput" class="title-input" placeholder="The day we went to the beach">
       </div>
+
+      <div class="form-group" id="forGroup" hidden>
+        <label class="form-label" for="recipientInput">Who is this for?</label>
+        <input type="text" id="recipientInput" placeholder="My daughter, Sarah" list="recipientList" autocomplete="off">
+        <label class="form-label form-label-sub" for="occasionInput">When should they hear it?</label>
+        <input type="text" id="occasionInput" placeholder="Anytime" list="occasionList" autocomplete="off">
+      </div>
+      <button type="button" class="link-btn for-toggle" id="forToggle">+ Address this to someone</button>
 
       <div class="form-group">
         <label class="form-label">When</label>
@@ -382,11 +431,20 @@
             <div class="audio-hint">You can keep this audio, or re-record. <button type="button" class="link-btn link-inline" id="removeAudioBtn">Remove audio</button></div>
           </div>
         </div>
-        <textarea id="storyInput" placeholder="Or write it here. Tell it the way you'd tell it out loud."></textarea>
-        <div class="transcribe-note">
-          <strong>On transcription</strong>
-          In the final app, recorded audio will auto-transcribe in your voice. For now, record audio <em>and</em> type the story yourself — both will save.
+        <div class="story-wrap">
+          <textarea id="storyInput" placeholder="Or write it here. Tell it the way you'd tell it out loud."></textarea>
+          <button type="button" class="dictate-btn" id="dictateBtn" hidden>
+            <span class="dot"></span><span id="dictateLabel">Speak to type</span>
+          </button>
         </div>
+        <p class="field-hint">Your recording is kept exactly as you said it. Speaking to type just turns your words into text. You can use either, or both.</p>
+      </div>
+
+      <div class="form-group follow-group" id="followGroup" hidden>
+        <label class="form-label">Keep going? <span class="label-quiet">Optional</span></label>
+        <p class="field-hint">A few questions that might help fill in the picture. Answer any, all, or none.</p>
+        <div class="follow-list" id="followList"></div>
+        <button type="button" class="link-btn" id="followMore">Ask me something else</button>
       </div>
 
       <div class="form-group">
@@ -396,6 +454,16 @@
           <input type="text" id="peopleInput" placeholder="Add a name" list="peopleList" autocomplete="off">
           <button type="button" id="addPersonBtn">Add</button>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Who can see this</label>
+        <div class="segmented" role="radiogroup" aria-label="Who can see this">
+          <label><input type="radio" name="visibility" value="private" checked><span>Just me</span></label>
+          <label><input type="radio" name="visibility" value="family"><span>Family</span></label>
+          <label><input type="radio" name="visibility" value="public"><span>Anyone</span></label>
+        </div>
+        <p class="field-hint" id="visibilityHint"></p>
       </div>
 
       <div class="form-group">
@@ -437,9 +505,13 @@
 
 <datalist id="peopleList"></datalist>
 <datalist id="tagList"></datalist>
+<datalist id="recipientList"></datalist>
+<datalist id="occasionList"></datalist>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="./prompts.js"></script>
+<script src="./photos.js"></script>
 <script src="./archive.js"></script>
 <script src="./app.js"></script>
 <script>

@@ -6,11 +6,14 @@
  *     - "memories" store: keyed by memory.id
  *     - "images" store: keyed by memory.id, holds Blob
  *     - "audio" store: keyed by memory.id, holds Blob
+ *     - "photos" store: keyed by photo.id. Camera-roll photos { blob, thumb, takenAt,
+ *       localDate, lat, lon, memoryId|null }. memoryId null = waiting in the Photos tab.
  *     - "settings" store: keyed by setting key
  *         "user": { name, avatar }            — personalization
  *         "meta": { lastExportAt }            — backup bookkeeping
  *         "questions": [{ id, text, from, askedAt, answeredBy }] — family "ask me" questions
  *         "plan": { recipients, backupLocation, aiMode } — the user's legacy plan
+ *         "dismissedBuckets": [bucketId] — photo moments set aside with "Not now"
  *
  *   localStorage:
  *     - "legacy_welcome_seen": "1" once the user has dismissed the welcome screen
@@ -22,18 +25,19 @@
 (() => {
   'use strict';
 
-  const SCHEMA_VERSION = '2.0';
+  const SCHEMA_VERSION = '2.1';
   const BACKUP_NUDGE_THRESHOLD = 5;   // unbacked memories before we nudge
   const AVATAR_MAX_PX = 320;
 
   // ============= STORAGE =============
 
   const DB_NAME = 'legacy_memories';
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const STORE_MEMORIES = 'memories';
   const STORE_IMAGES = 'images';
   const STORE_AUDIO = 'audio';
   const STORE_SETTINGS = 'settings';
+  const STORE_PHOTOS = 'photos';
 
   let db = null;
 
@@ -46,6 +50,7 @@
         if (!_db.objectStoreNames.contains(STORE_IMAGES)) _db.createObjectStore(STORE_IMAGES);
         if (!_db.objectStoreNames.contains(STORE_AUDIO)) _db.createObjectStore(STORE_AUDIO);
         if (!_db.objectStoreNames.contains(STORE_SETTINGS)) _db.createObjectStore(STORE_SETTINGS);
+        if (!_db.objectStoreNames.contains(STORE_PHOTOS)) _db.createObjectStore(STORE_PHOTOS, { keyPath: 'id' });
       };
       req.onsuccess = (e) => { db = e.target.result; resolve(db); };
       req.onerror = (e) => reject(e.target.error);
@@ -55,7 +60,7 @@
   function idbPut(store, key, value) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(store, 'readwrite');
-      if (store === STORE_MEMORIES) tx.objectStore(store).put(value);
+      if (store === STORE_MEMORIES || store === STORE_PHOTOS) tx.objectStore(store).put(value);
       else tx.objectStore(store).put(value, key);
       tx.oncomplete = () => resolve();
       tx.onerror = (e) => reject(e.target.error);
@@ -94,6 +99,9 @@
     try { await idbDel(STORE_IMAGES, id); } catch {}
     try { await idbDel(STORE_AUDIO, id); } catch {}
   }
+
+  async function getPhoto(id) { try { return await idbGet(STORE_PHOTOS, id); } catch { return null; } }
+  async function putPhoto(rec) { return idbPut(STORE_PHOTOS, null, rec); }
 
   async function loadSettings() {
     try {
@@ -144,6 +152,13 @@
     plan: { ...DEFAULT_PLAN },
     activeTab: 'memories',
     query: '',
+    photos: [],
+    buckets: [],
+    allBuckets: [],
+    dismissed: [],
+    showHidden: false,
+    home: null,
+    forOpen: false,
   };
 
   function freshDraft() {
@@ -151,6 +166,9 @@
       image: null, audio: null, audioMime: null,
       removeImage: false, removeAudio: false,
       prompt: null, askedBy: null, questionId: null,
+      category: null, recipient: null, fallbackTitle: null,
+      gallery: [], removedGallery: [], followUps: [],
+      visibilityTouched: false,
     };
   }
 
@@ -186,6 +204,9 @@
   // ============= HELPERS =============
   const $ = (id) => document.getElementById(id);
 
+  function newPhotoId() {
+    return 'ph_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
   function uuid() {
     return 'mem_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
   }
@@ -430,6 +451,8 @@
     });
     $('tabMemories').classList.toggle('active', tab === 'memories');
     $('tabChat').classList.toggle('active', tab === 'chat');
+    $('tabPhotos').classList.toggle('active', tab === 'photos');
+    if (tab === 'photos') renderPhotos();
     if (tab === 'chat') $('chatMemoryCount').textContent = state.memories.length;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -440,7 +463,10 @@
 
   // ============= SEARCH =============
   function haystack(m) {
-    return [m.title, m.story, m.prompt, ...(m.peopleTags || []), ...(m.generalTags || []),
+    const vis = { private: 'private just me', family: 'family', public: 'public anyone' }[m.visibility || 'private'];
+    return [m.title, m.story, m.prompt, m.askedBy, m.recipient, m.occasion, vis,
+      ...(m.peopleTags || []), ...(m.generalTags || []),
+      ...(m.photos || []).map(p => p.caption), ...(m.followUps || []).flatMap(f => [f.q, f.a]),
       memoryDateLabel(m), m.date && m.date.slice(0, 4)]
       .filter(Boolean).join(' \n ').toLowerCase();
   }
@@ -503,11 +529,20 @@
       .filter(m => m.date && !m.dateApproximate && m.date.slice(5) === md && +m.date.slice(0, 4) < year)
       .sort((a, b) => a.date.localeCompare(b.date));
   }
+  // Photo moments from today's date in past years that don't have a story yet.
+  function onThisDayBuckets() {
+    const today = todayISO();
+    const md = today.slice(5);
+    const year = +today.slice(0, 4);
+    return state.buckets.filter(b => b.photos.some(p =>
+      p.source === 'exif' && p.localDate && p.localDate.slice(5) === md && +p.localDate.slice(0, 4) < year));
+  }
   function renderOnThisDay() {
     const el = $('onThisDay');
     const list = state.query ? [] : onThisDayMemories();
-    el.hidden = !list.length;
-    if (!list.length) { el.innerHTML = ''; return; }
+    const moments = state.query ? [] : onThisDayBuckets();
+    el.hidden = !list.length && !moments.length;
+    if (el.hidden) { el.innerHTML = ''; return; }
     const year = new Date().getFullYear();
     el.innerHTML = `
       <div class="otd-eyebrow">On this day</div>
@@ -517,8 +552,20 @@
           <span class="otd-ago">${plural(ago, 'year', 'years')} ago</span>
           <span class="otd-title">${escapeHtml(m.title || 'Untitled')}</span>
         </button>`;
+      }).join('')}
+      ${moments.map(b => {
+        const ago = year - +b.startDate.slice(0, 4);
+        return `<button class="otd-item otd-moment" data-bucket="${escapeHtml(b.id)}">
+          <span class="otd-ago">${plural(ago, 'year', 'years')} ago · ${plural(b.photos.length, 'photo', 'photos')}</span>
+          <span class="otd-title">${escapeHtml(window.LegacyPhotos.bucketTitle(b))}</span>
+          <span class="otd-cta">Would you like to tell this story?</span>
+        </button>`;
       }).join('')}`;
-    el.querySelectorAll('.otd-item').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.id)));
+    el.querySelectorAll('[data-id]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.id)));
+    el.querySelectorAll('[data-bucket]').forEach(btn => btn.addEventListener('click', () => {
+      const b = state.allBuckets.find(x => x.id === btn.dataset.bucket);
+      if (b) openModal(null, { bucket: b });
+    }));
   }
 
   // ============= RENDER LIST =============
@@ -570,7 +617,8 @@
 
     // Resolve thumbnails in parallel before touching the DOM, so a fast typist
     // doesn't see cards from a stale query flash in.
-    const thumbs = await Promise.all(filtered.map(m => m.hasImage ? thumbUrl(m.id) : null));
+    const thumbs = await Promise.all(filtered.map(m => m.hasImage ? thumbUrl(m.id)
+      : (m.photos && m.photos.length ? photoThumbUrl(m.photos[0].id) : null)));
     if (token !== renderToken) return;
 
     const frag = document.createDocumentFragment();
@@ -589,7 +637,10 @@
 
       const metaTags = (m.peopleTags || []).concat(m.generalTags || []).slice(0, 4)
         .map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
-      const audioBadge = m.hasAudio ? '<span class="tag tag-audio">♪ voice</span>' : '';
+      const audioBadge = (m.hasAudio ? '<span class="tag tag-audio">♪ voice</span>' : '')
+        + (m.recipient ? `<span class="tag tag-for">For ${escapeHtml(m.recipient)}</span>` : '')
+        + (m.photos && m.photos.length > 1 ? `<span class="tag">${m.photos.length} photos</span>` : '')
+        + ((m.visibility || 'private') === 'private' ? '<span class="tag tag-private">Just me</span>' : '');
 
       card.innerHTML = `
         ${imgHtml}
@@ -609,83 +660,158 @@
     el.appendChild(frag);
   }
 
-  // ============= PROMPTS =============
-  const PROMPTS = [
-    'What did the house you grew up in smell like?',
-    'Who taught you something you still use every day?',
-    'What was your first job, and what did you spend the money on?',
-    'Describe a meal you wish you could eat one more time.',
-    'What is a risk you took that changed everything?',
-    'Tell the story of how you met someone who matters to you.',
-    'What did a normal Saturday look like when you were ten?',
-    'What is something you were wrong about for a long time?',
-    'Describe a place you could still walk through with your eyes closed.',
-    'What song takes you straight back to a specific moment?',
-    'What do you want your grandchildren to know about your parents?',
-    'Tell about a time you laughed so hard you couldn’t stop.',
-    'What was the hardest year of your life, and what got you through it?',
-    'What is a small tradition your family had that no one else did?',
-    'Who was your best friend at fifteen? What did you two get up to?',
-    'What is the best advice you ever ignored?',
-    'Describe the day one of your children was born.',
-    'What is something you made with your hands that you were proud of?',
-    'Tell about a trip that didn’t go as planned.',
-    'What did you believe about adulthood as a kid that turned out to be false?',
-    'What is a phrase or saying you picked up from someone you love?',
-    'Describe a teacher you will never forget.',
-    'What were you doing on a day the whole world remembers?',
-    'What would you want to say to yourself at twenty?',
-    'Tell about a pet that was part of the family.',
-    'What is a decision you’re quietly proud of?',
-    'Describe the view from a window you looked out of every day.',
-    'What is something you hope never changes about the people you love?',
-    'Tell the story behind an object you’ve kept for years.',
-    'What does a perfect ordinary day look like for you now?',
-  ];
-  let promptIndex = Math.floor(Math.random() * PROMPTS.length);
-
-  // The suggestion card shows questions family asked first (newest first),
-  // then falls back to the built-in prompts.
-  let suggestion = null;  // { kind: 'question', q } | { kind: 'prompt', text }
+  // ============= GUIDED START =============
+  // A new memory starts with "what do you feel like sharing today?" rather
+  // than a blank form: family questions → photo moments → categories →
+  // (who it's for) → a prompt. Skipping is always one tap.
+  const P = window.LegacyPrompts;
+  let guideStack = [];
 
   function openQuestions() {
     return state.questions.filter(q => !q.answeredBy).sort((a, b) => b.askedAt - a.askedAt);
   }
-  function randomPrompt() {
-    let next = promptIndex;
-    while (PROMPTS.length > 1 && next === promptIndex) next = Math.floor(Math.random() * PROMPTS.length);
-    promptIndex = next;
-    return { kind: 'prompt', text: PROMPTS[promptIndex] };
+  function recentRecipients() {
+    const seen = new Map();
+    [...state.memories].sort((a, b) => (b.updated || 0) - (a.updated || 0)).forEach(m => {
+      const r = (m.recipient || '').trim();
+      if (r && !seen.has(r.toLowerCase())) seen.set(r.toLowerCase(), r);
+    });
+    return [...seen.values()].slice(0, 6);
   }
-  function showSuggestion() {
-    if (!suggestion) return;
-    const isQ = suggestion.kind === 'question';
-    $('promptEyebrow').textContent = isQ
-      ? (suggestion.q.from ? `${suggestion.q.from} asked you` : 'Someone asked you')
-      : 'Need a starting point?';
-    $('promptText').textContent = isQ ? suggestion.q.text : suggestion.text;
-    $('promptDismiss').hidden = !isQ;
-    $('promptCard').classList.toggle('is-question', isQ);
+
+  function showGuide() {
+    guideStack = [{ view: 'home' }];
+    renderGuide();
+    $('guideStep').hidden = false;
+    $('formStep').hidden = true;
+    $('saveBtn').hidden = true;
   }
-  function resetSuggestion() {
-    const qs = openQuestions();
-    suggestion = qs.length ? { kind: 'question', q: qs[0] } : { kind: 'prompt', text: PROMPTS[promptIndex] };
-    showSuggestion();
+  function showFormStep() {
+    $('guideStep').hidden = true;
+    $('formStep').hidden = false;
+    $('saveBtn').hidden = false;
+    renderForFields();
+    renderFollowUps();
+    $('addModal').scrollTop = 0;
   }
-  function nextSuggestion() {
-    const qs = openQuestions();
-    if (suggestion && suggestion.kind === 'question') {
-      const i = qs.findIndex(q => q.id === suggestion.q.id);
-      if (i >= 0 && i + 1 < qs.length) { suggestion = { kind: 'question', q: qs[i + 1] }; showSuggestion(); return; }
+  function pushGuide(view) {
+    guideStack.push(view);
+    renderGuide();
+    $('addModal').scrollTop = 0;
+  }
+  $('guideBack').addEventListener('click', () => {
+    if (guideStack.length > 1) { guideStack.pop(); renderGuide(); }
+  });
+  $('guideSkip').addEventListener('click', showFormStep);
+
+  function renderGuide() {
+    const v = guideStack[guideStack.length - 1];
+    const body = $('guideBody');
+    $('guideBack').hidden = guideStack.length < 2;
+    $('guideSkip').hidden = v.view !== 'home';
+
+    if (v.view === 'home') {
+      $('guideTitle').textContent = 'What do you feel like sharing today?';
+      $('guideSub').textContent = 'Pick whatever fits your mood. Every question is optional.';
+      const qs = openQuestions().slice(0, 3);
+      const nb = state.buckets.length;
+      let html = qs.map(q => `
+        <button type="button" class="guide-tile guide-tile-question" data-q="${escapeHtml(q.id)}">
+          <span class="guide-tile-eyebrow">${escapeHtml(q.from || 'Someone')} asked you</span>
+          <span class="guide-tile-title">${escapeHtml(q.text)}</span>
+        </button>`).join('');
+      if (nb) {
+        html += `
+        <button type="button" class="guide-tile guide-tile-photos" data-photos="1">
+          <span class="guide-tile-title">The story behind some photos</span>
+          <span class="guide-tile-blurb">${plural(nb, 'moment', 'moments')} from your camera roll waiting</span>
+        </button>`;
+      }
+      html += P.CATEGORIES.map(c => `
+        <button type="button" class="guide-tile" data-cat="${c.id}">
+          <span class="guide-tile-title">${escapeHtml(c.title)}</span>
+          <span class="guide-tile-blurb">${escapeHtml(c.blurb)}</span>
+        </button>`).join('');
+      body.innerHTML = `<div class="guide-grid">${html}</div>`;
+      body.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
+        const q = state.questions.find(x => x.id === b.dataset.q);
+        if (q) pinQuestion(q);
+      }));
+      body.querySelectorAll('[data-photos]').forEach(b => b.addEventListener('click', () => {
+        closeModal();
+        switchTab('photos');
+      }));
+      body.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
+        const c = P.category(b.dataset.cat);
+        pushGuide(c.needsRecipient ? { view: 'recipient', categoryId: c.id } : { view: 'prompts', categoryId: c.id });
+      }));
+      return;
     }
-    suggestion = randomPrompt();
-    showSuggestion();
+
+    if (v.view === 'recipient') {
+      $('guideTitle').textContent = 'Who would you like to talk to?';
+      $('guideSub').textContent = 'A name, or how you think of them: "my son", "Grandma", "Sarah".';
+      const recents = recentRecipients();
+      body.innerHTML = `
+        <input type="text" id="guideRecipient" placeholder="Their name" autocomplete="off" maxlength="80" value="${escapeHtml(state.draft.recipient || '')}">
+        ${recents.length ? `<div class="guide-chips">${recents.map(r =>
+          `<button type="button" class="ask-idea" data-r="${escapeHtml(r)}">${escapeHtml(r)}</button>`).join('')}</div>` : ''}
+        <button type="button" class="btn-primary guide-continue" id="guideRecipientGo">Continue</button>`;
+      const go = (name) => {
+        name = String(name || '').trim();
+        if (!name) { toast('Add a name first'); $('guideRecipient').focus(); return; }
+        state.draft.recipient = name;
+        pushGuide({ view: 'prompts', categoryId: 'someone' });
+      };
+      $('guideRecipientGo').addEventListener('click', () => go($('guideRecipient').value));
+      $('guideRecipient').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); go(e.target.value); }
+      });
+      body.querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => go(b.dataset.r)));
+      return;
+    }
+
+    if (v.view === 'prompts') {
+      const c = P.category(v.categoryId);
+      const name = state.draft.recipient;
+      $('guideTitle').textContent = c.needsRecipient ? `Something for ${name}` : c.title;
+      $('guideSub').textContent = c.gentle || 'Choose a question, or say it in your own words.';
+      const prompts = c.prompts.map(t => P.fill(t, name));
+      body.innerHTML = `
+        <div class="guide-list">
+          ${prompts.map((t, i) => `<button type="button" class="guide-prompt" data-i="${i}">${escapeHtml(t)}</button>`).join('')}
+          <button type="button" class="guide-prompt guide-prompt-own" data-own="1">In my own words</button>
+        </div>`;
+      body.querySelectorAll('[data-i]').forEach(b => b.addEventListener('click', () => startFromPrompt(c.id, prompts[+b.dataset.i])));
+      body.querySelector('[data-own]').addEventListener('click', () => startFromPrompt(c.id, null));
+    }
   }
+
+  function startFromPrompt(categoryId, text) {
+    state.draft.category = categoryId;
+    state.draft.prompt = text;
+    state.draft.askedBy = null;
+    state.draft.questionId = null;
+    if (state.draft.recipient) {
+      $('recipientInput').value = state.draft.recipient;
+      if (!state.draft.visibilityTouched) setVisibility('family');
+    }
+    renderPromptState();
+    showFormStep();
+  }
+
   function pinQuestion(q) {
     state.draft.prompt = q.text;
     state.draft.askedBy = q.from || null;
     state.draft.questionId = q.id;
+    // Answering someone's question is, naturally, for them.
+    if (q.from && !$('recipientInput').value.trim()) {
+      state.draft.recipient = q.from;
+      $('recipientInput').value = q.from;
+    }
+    if (!state.draft.visibilityTouched) setVisibility('family');
     renderPromptState();
+    showFormStep();
   }
   function renderPromptState() {
     const pinned = !!state.draft.prompt;
@@ -693,28 +819,7 @@
     $('promptPinnedText').textContent = state.draft.prompt || '';
     $('promptPinnedFrom').hidden = !state.draft.askedBy;
     $('promptPinnedFrom').textContent = state.draft.askedBy ? `${state.draft.askedBy} asked` : '';
-    // Only offer suggestions on brand-new memories.
-    $('promptCard').hidden = pinned || !!state.editing;
   }
-  $('promptShuffle').addEventListener('click', nextSuggestion);
-  $('promptUse').addEventListener('click', () => {
-    if (!suggestion) return;
-    if (suggestion.kind === 'question') pinQuestion(suggestion.q);
-    else {
-      state.draft.prompt = suggestion.text;
-      state.draft.askedBy = null;
-      state.draft.questionId = null;
-      renderPromptState();
-    }
-    $('storyInput').focus();
-  });
-  $('promptDismiss').addEventListener('click', async () => {
-    if (!suggestion || suggestion.kind !== 'question') return;
-    if (!confirm('Remove this question? It won\'t be shown again.')) return;
-    await removeQuestion(suggestion.q.id);
-    resetSuggestion();
-    renderAskBanner();
-  });
   $('promptUnpin').addEventListener('click', () => {
     state.draft.prompt = null;
     state.draft.askedBy = null;
@@ -767,8 +872,15 @@
   $('askBannerBtn').addEventListener('click', async () => {
     const q = openQuestions()[0];
     if (!q) return;
-    await openModal();
-    pinQuestion(q);
+    await openModal(null, { question: q });
+  });
+
+  $('askBannerDismiss').addEventListener('click', async () => {
+    const q = openQuestions()[0];
+    if (!q) return;
+    if (!confirm(`Set aside "${q.text}"? It won't be shown again. That's completely fine.`)) return;
+    await removeQuestion(q.id);
+    renderAskBanner();
   });
 
   async function shareLink(url, title, text) {
@@ -860,8 +972,7 @@
     try { localStorage.setItem('legacy_welcome_seen', '1'); } catch {}
     renderAskBanner();
     if (!q.answeredBy) {
-      await openModal();
-      pinQuestion(q);
+      await openModal(null, { question: q });
       toast(q.from ? `${q.from} asked you a question` : 'You have a new question');
     }
     return true;
@@ -900,41 +1011,66 @@
   $('reminderBtn').addEventListener('click', downloadReminder);
 
   // ============= ADD/EDIT MEMORY MODAL =============
-  async function openModal(editingId = null) {
+  // opts: { bucket } to start from a photo moment, { question } to answer a family question.
+  async function openModal(editingId = null, opts = {}) {
     state.editing = editingId;
     state.draft = freshDraft();
+    state.forOpen = false;
     revokeScope('modal');
+    stopDictation();
     $('modalTitle').textContent = editingId ? 'Edit memory' : 'New memory';
     $('saveBtn').textContent = editingId ? 'Save changes' : 'Save memory';
 
     $('titleInput').value = '';
+    $('titleInput').placeholder = 'The day we went to the beach';
     $('dateInput').value = todayISO();
     $('dateApproxInput').checked = false;
     $('storyInput').value = '';
     $('peopleInput').value = '';
     $('tagInput').value = '';
+    $('recipientInput').value = '';
+    $('occasionInput').value = '';
     $('peopleTags').innerHTML = '';
     $('generalTags').innerHTML = '';
+    setVisibility('private');
     resetPhoto();
     resetAudio();
-    resetSuggestion();
+    renderGallery();
     renderPromptState();
 
     showModal('addModal');
     $('addModal').scrollTop = 0;
 
-    if (!editingId) return;
+    if (!editingId) {
+      if (opts.bucket) startFromBucket(opts.bucket);
+      else if (opts.question) pinQuestion(opts.question);
+      else showGuide();
+      return;
+    }
+
+    showFormStep();
     const m = await loadMemory(editingId);
     if (!m || state.editing !== editingId) return;
     $('titleInput').value = m.title || '';
     $('dateInput').value = m.date || '';
     $('dateApproxInput').checked = !!m.dateApproximate;
     $('storyInput').value = m.story || '';
+    $('recipientInput').value = m.recipient || '';
+    $('occasionInput').value = m.occasion || '';
     (m.peopleTags || []).forEach(addPersonChip);
     (m.generalTags || []).forEach(addGeneralTagChip);
     state.draft.prompt = m.prompt || null;
     state.draft.askedBy = m.askedBy || null;
+    state.draft.category = m.category || null;
+    state.draft.recipient = m.recipient || null;
+    state.draft.followUps = (m.followUps || []).map(f => ({ q: f.q, a: f.a }));
+    state.draft.gallery = (m.photos || []).map(p => ({ id: p.id, caption: p.caption || '' }));
+    setVisibility(visibilityOf(m));
+    state.draft.visibilityTouched = true;
     renderPromptState();
+    renderForFields();
+    renderGallery();
+    renderFollowUps();
     if (m.hasImage) {
       const blob = await idbGet(STORE_IMAGES, editingId);
       if (blob && state.editing === editingId) showPhoto(scopedUrl('modal', blob));
@@ -947,12 +1083,222 @@
 
   function closeModal() {
     cancelRecording();
+    stopDictation();
     hideModal('addModal');
     $('audioPlayback').pause();
     state.editing = null;
     state.draft = freshDraft();
     revokeScope('modal');
   }
+
+  // ============= FOR SOMEONE / VISIBILITY =============
+  const VISIBILITY_HINTS = {
+    private: 'Just you. Left out of the family edition you hand on.',
+    family: 'Included in the family edition you hand on.',
+    public: 'Fine to share with anyone someday. Nothing is published: Legacy has no server yet.',
+  };
+  function visibilityOf(m) { return m.visibility || 'private'; }
+  function setVisibility(v) {
+    document.querySelectorAll('input[name="visibility"]').forEach(r => { r.checked = r.value === v; });
+    $('visibilityHint').textContent = VISIBILITY_HINTS[v] || '';
+  }
+  function getVisibility() {
+    const r = document.querySelector('input[name="visibility"]:checked');
+    return r ? r.value : 'private';
+  }
+  document.querySelectorAll('input[name="visibility"]').forEach(r => r.addEventListener('change', () => {
+    state.draft.visibilityTouched = true;
+    setVisibility(getVisibility());
+  }));
+
+  function renderForFields() {
+    const show = state.forOpen || !!state.draft.recipient || state.draft.category === 'someone'
+      || !!$('recipientInput').value.trim() || !!$('occasionInput').value.trim();
+    $('forGroup').hidden = !show;
+    $('forToggle').hidden = show;
+    if (show && state.draft.recipient && !$('recipientInput').value) $('recipientInput').value = state.draft.recipient;
+  }
+  $('forToggle').addEventListener('click', () => {
+    state.forOpen = true;
+    renderForFields();
+    $('recipientInput').focus();
+  });
+  $('recipientInput').addEventListener('change', () => {
+    if ($('recipientInput').value.trim() && !state.draft.visibilityTouched) setVisibility('family');
+  });
+
+  // ============= GALLERY (several photos, each with a note) =============
+  const photoUrlCache = new Map();  // photo id → thumbnail URL
+  let galleryToken = 0;
+
+  async function photoThumbUrl(id) {
+    if (photoUrlCache.has(id)) return photoUrlCache.get(id);
+    const rec = await getPhoto(id);
+    const blob = rec && (rec.thumb || rec.blob);
+    const url = blob ? URL.createObjectURL(blob) : null;
+    photoUrlCache.set(id, url);
+    return url;
+  }
+  function forgetPhotoUrl(id) {
+    const url = photoUrlCache.get(id);
+    if (url) URL.revokeObjectURL(url);
+    photoUrlCache.delete(id);
+  }
+
+  async function renderGallery() {
+    const token = ++galleryToken;
+    const g = state.draft.gallery;
+    $('galleryLabel').textContent = g.length ? `Photos from this moment (${g.length})` : 'More photos';
+    $('galleryHint').hidden = !g.length;
+    $('addGalleryBtn').textContent = g.length ? '+ Add more photos' : '+ Add several photos';
+    const urls = await Promise.all(g.map(it =>
+      it.file ? (it.url || (it.url = scopedUrl('modal', it.file))) : photoThumbUrl(it.id)));
+    if (token !== galleryToken) return;
+    const el = $('galleryEdit');
+    el.innerHTML = g.map((it, i) => `
+      <figure class="gallery-item">
+        ${urls[i] ? `<img src="${urls[i]}" alt="" loading="lazy">` : '<div class="gallery-noimg">Photo</div>'}
+        <button type="button" class="gallery-remove" data-rm="${i}" aria-label="Remove this photo from the memory">×</button>
+        <textarea class="gallery-caption" data-cap="${i}" rows="2" placeholder="What's happening here?">${escapeHtml(it.caption || '')}</textarea>
+      </figure>`).join('');
+    el.querySelectorAll('[data-cap]').forEach(t => t.addEventListener('input', () => {
+      const it = state.draft.gallery[+t.dataset.cap];
+      if (it) it.caption = t.value;
+    }));
+    el.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+      const [it] = state.draft.gallery.splice(+b.dataset.rm, 1);
+      if (it && !it.file) state.draft.removedGallery.push(it.id);
+      renderGallery();
+    }));
+  }
+  $('addGalleryBtn').addEventListener('click', () => $('galleryInput').click());
+  $('galleryInput').addEventListener('change', (e) => {
+    const files = [...e.target.files];
+    e.target.value = '';
+    files.forEach(f => state.draft.gallery.push({ id: newPhotoId(), file: f, caption: '' }));
+    renderGallery();
+    if ($('followGroup').hidden && shouldOfferFollowUps()) renderFollowUps();
+  });
+
+  function startFromBucket(b) {
+    state.draft.category = 'photo';
+    state.draft.fallbackTitle = window.LegacyPhotos.bucketTitle(b);
+    state.draft.gallery = b.photos.map(p => ({ id: p.id, caption: '' }));
+    $('titleInput').placeholder = 'Give this moment a name';
+    if (b.startDate && b.kind !== 'undated') {
+      $('dateInput').value = b.startDate;
+      $('dateApproxInput').checked = !!b.guessedDates;
+    } else {
+      $('dateInput').value = '';
+    }
+    renderGallery();
+    showFormStep();
+  }
+
+  // ============= FOLLOW-UP QUESTIONS =============
+  function followCandidates() {
+    return P.followUpsFor({
+      categoryId: state.draft.category,
+      recipient: $('recipientInput').value.trim() || state.draft.recipient,
+      hasGallery: state.draft.gallery.length > 0,
+    });
+  }
+  function shouldOfferFollowUps() {
+    return state.draft.followUps.length > 0
+      || $('storyInput').value.trim().length >= 40
+      || !!state.draft.audio
+      || state.draft.gallery.length > 0;
+  }
+  function addFollowUp() {
+    const asked = new Set(state.draft.followUps.map(f => f.q));
+    const next = followCandidates().find(q => !asked.has(q));
+    if (!next) { toast("That's all the questions I have"); return false; }
+    state.draft.followUps.push({ q: next, a: '' });
+    return true;
+  }
+  function renderFollowUps() {
+    const show = shouldOfferFollowUps();
+    $('followGroup').hidden = !show;
+    if (!show) return;
+    if (!state.draft.followUps.length) { addFollowUp(); addFollowUp(); }
+    const el = $('followList');
+    el.innerHTML = state.draft.followUps.map((f, i) => `
+      <div class="follow-item">
+        <div class="follow-q">
+          <span>${escapeHtml(f.q)}</span>
+          <button type="button" class="follow-skip" data-skip="${i}" aria-label="Skip this question">Skip</button>
+        </div>
+        <textarea class="follow-a" data-f="${i}" rows="2" placeholder="Only if you want to">${escapeHtml(f.a || '')}</textarea>
+      </div>`).join('');
+    el.querySelectorAll('[data-f]').forEach(t => t.addEventListener('input', () => {
+      const f = state.draft.followUps[+t.dataset.f];
+      if (f) f.a = t.value;
+    }));
+    el.querySelectorAll('[data-skip]').forEach(b => b.addEventListener('click', () => {
+      state.draft.followUps.splice(+b.dataset.skip, 1);
+      if (!state.draft.followUps.length) addFollowUp();
+      renderFollowUps();
+    }));
+  }
+  $('followMore').addEventListener('click', () => {
+    if (addFollowUp()) {
+      renderFollowUps();
+      const items = $('followList').querySelectorAll('.follow-a');
+      if (items.length) items[items.length - 1].focus();
+    }
+  });
+  $('storyInput').addEventListener('input', () => {
+    if ($('followGroup').hidden && shouldOfferFollowUps()) renderFollowUps();
+  });
+
+  // ============= DICTATION (speak to type) =============
+  // Uses the browser's built-in speech recognition (Safari and Chrome).
+  // The voice recording stays the permanent record; this only fills in text.
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognizer = null;
+  if (SpeechRec) $('dictateBtn').hidden = false;
+
+  function stopDictation() {
+    if (recognizer) { try { recognizer.stop(); } catch {} }
+  }
+  $('dictateBtn').addEventListener('click', () => {
+    if (recognizer) { stopDictation(); return; }
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      toast('Stop the recording first');
+      return;
+    }
+    const r = new SpeechRec();
+    r.continuous = true;
+    r.interimResults = false;
+    r.lang = navigator.language || 'en-US';
+    r.onresult = (e) => {
+      let text = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) text += e.results[i][0].transcript;
+      }
+      text = text.trim();
+      if (!text) return;
+      const ta = $('storyInput');
+      ta.value = ta.value && !/\s$/.test(ta.value) ? `${ta.value} ${text}` : ta.value + text;
+      ta.dispatchEvent(new Event('input'));
+    };
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('Microphone access denied');
+    };
+    r.onend = () => {
+      recognizer = null;
+      $('dictateBtn').classList.remove('recording');
+      $('dictateLabel').textContent = 'Speak to type';
+    };
+    try {
+      r.start();
+      recognizer = r;
+      $('dictateBtn').classList.add('recording');
+      $('dictateLabel').textContent = 'Listening… tap to stop';
+    } catch {
+      toast('Dictation is unavailable here');
+    }
+  });
 
   // ============= ABOUT MODAL =============
   function openAbout() { showModal('aboutModal'); }
@@ -1063,6 +1409,7 @@
         state.draft.audioMime = chosenMime;
         state.draft.removeAudio = false;
         showAudio(scopedUrl('modal', blob));
+        if ($('followGroup').hidden && shouldOfferFollowUps()) renderFollowUps();
       };
 
       mediaRecorder.start();
@@ -1130,6 +1477,8 @@
     };
     fill('peopleList', people);
     fill('tagList', tags);
+    fill('recipientList', new Set(state.memories.map(m => m.recipient).filter(Boolean)));
+    $('occasionList').innerHTML = P.OCCASIONS.map(o => `<option value="${escapeHtml(o)}"></option>`).join('');
   }
 
   $('addPersonBtn').addEventListener('click', () => {
@@ -1160,6 +1509,7 @@
       toast('Stop the recording first');
       return;
     }
+    stopDictation();
     flushTagInputs();
 
     const title = $('titleInput').value.trim();
@@ -1167,6 +1517,12 @@
     const story = $('storyInput').value.trim();
     const peopleTags = getChipValues('peopleTags');
     const generalTags = getChipValues('generalTags');
+    const recipient = $('recipientInput').value.trim().slice(0, 80) || null;
+    const occasion = $('occasionInput').value.trim().slice(0, 80) || null;
+    const followUps = state.draft.followUps
+      .map(f => ({ q: f.q, a: String(f.a || '').trim() }))
+      .filter(f => f.a);
+    const gallery = state.draft.gallery;
     const wasEditing = !!state.editing;
     const id = state.editing || uuid();
     const existing = wasEditing ? await loadMemory(id) : null;
@@ -1174,7 +1530,7 @@
     const hasImage = !!state.draft.image || (!state.draft.removeImage && !!(existing && existing.hasImage));
     const hasAudio = !!state.draft.audio || (!state.draft.removeAudio && !!(existing && existing.hasAudio));
 
-    if (!title && !story && !hasImage && !hasAudio) {
+    if (!title && !story && !hasImage && !hasAudio && !gallery.length && !followUps.length) {
       toast('Add a title, story, photo, or recording');
       return;
     }
@@ -1183,18 +1539,24 @@
       id,
       schema_version: SCHEMA_VERSION,
       userId: 'local_user',
-      title: title || (state.draft.prompt ? state.draft.prompt : 'Untitled'),
+      title: title || state.draft.prompt || state.draft.fallbackTitle || (existing && existing.title) || 'Untitled',
       date: date || null,
       dateApproximate: !!date && $('dateApproxInput').checked,
       story,
       prompt: state.draft.prompt || null,
       askedBy: state.draft.prompt ? (state.draft.askedBy || null) : null,
+      category: state.draft.category || (existing && existing.category) || null,
+      recipient,
+      occasion: recipient || occasion ? occasion : null,
+      visibility: getVisibility(),
+      followUps,
+      photos: gallery.map(it => ({ id: it.id, caption: String(it.caption || '').trim() })),
       peopleTags,
       generalTags,
       hasImage,
       hasAudio,
       audioMime: hasAudio ? (state.draft.audioMime || (existing && existing.audioMime) || null) : null,
-      preview: story ? story.slice(0, 160) : '',
+      preview: (story || followUps.map(f => f.a).join(' ') || gallery.map(g => g.caption).filter(Boolean).join(' ')).slice(0, 160),
       created: existing ? existing.created : Date.now(),
       updated: Date.now(),
       synced: false,
@@ -1207,15 +1569,39 @@
       else if (!hasImage) await idbDel(STORE_IMAGES, id);
       if (state.draft.audio) await idbPut(STORE_AUDIO, id, state.draft.audio);
       else if (!hasAudio) await idbDel(STORE_AUDIO, id);
+
+      // Gallery photos: new files become photo records; inbox photos get claimed.
+      for (const it of gallery) {
+        if (it.file) {
+          const meta = await window.LegacyPhotos.readPhotoMeta(it.file);
+          const thumb = await window.LegacyPhotos.makeThumb(it.file);
+          await putPhoto({
+            id: it.id, blob: it.file, thumb, name: it.file.name, size: it.file.size, type: it.file.type,
+            ...meta, importedAt: Date.now(), memoryId: id,
+          });
+        } else {
+          const rec = await getPhoto(it.id);
+          if (rec && rec.memoryId !== id) await putPhoto({ ...rec, memoryId: id });
+        }
+      }
+      // Photos taken out of this memory go back to the Photos tab.
+      for (const pid of state.draft.removedGallery) {
+        const rec = await getPhoto(pid);
+        if (rec && rec.memoryId === id) await putPhoto({ ...rec, memoryId: null });
+      }
+
       await saveMemory(memory);
       invalidateThumb(id);
       if (state.draft.questionId) await markAnswered(state.draft.questionId, id);
 
       const isFirst = state.memories.length === 0;
       state.memories = await loadAllMemories();
+      await loadPhotos();
+      refreshBuckets();
       refreshDatalists();
       closeModal();
       await renderList();
+      renderPhotos();
       toast(wasEditing ? 'Memory updated' : 'Memory saved');
       if (isFirst) requestPersistence();
     } catch (err) {
@@ -1228,6 +1614,8 @@
   }
 
   // ============= DETAIL =============
+  const VISIBILITY_LABELS = { private: 'Just me', family: 'Family', public: 'Anyone' };
+
   async function openDetail(id) {
     const m = await loadMemory(id);
     if (!m) return;
@@ -1238,6 +1626,9 @@
     html += `<span class="detail-date">${escapeHtml(memoryDateLabel(m))}</span>`;
     html += `<h1 class="detail-title">${escapeHtml(m.title)}</h1>`;
 
+    if (m.recipient) {
+      html += `<p class="detail-for">For ${escapeHtml(m.recipient)}${m.occasion ? ` · ${escapeHtml(m.occasion)}` : ''}</p>`;
+    }
     if (m.prompt && m.prompt !== m.title) {
       html += `<p class="detail-prompt">${m.askedBy ? `${escapeHtml(m.askedBy)} asked: ` : ''}${escapeHtml(m.prompt)}</p>`;
     } else if (m.askedBy) {
@@ -1256,6 +1647,25 @@
 
     if (m.story) html += `<div class="detail-story">${escapeHtml(m.story)}</div>`;
 
+    if (m.photos && m.photos.length) {
+      const recs = await Promise.all(m.photos.map(p => getPhoto(p.id)));
+      const figs = m.photos.map((p, i) => {
+        const r = recs[i];
+        if (!r) return '';
+        return `<figure class="detail-photo">
+          <img src="${scopedUrl('detail', r.blob)}" alt="" loading="lazy">
+          ${p.caption ? `<figcaption>${escapeHtml(p.caption)}</figcaption>` : ''}
+        </figure>`;
+      }).join('');
+      html += `<div class="detail-gallery">${figs}</div>`;
+    }
+
+    if (m.followUps && m.followUps.length) {
+      html += `<div class="detail-follow">${m.followUps.map(f => `
+        <p class="detail-follow-q">${escapeHtml(f.q)}</p>
+        <p class="detail-follow-a">${escapeHtml(f.a)}</p>`).join('')}</div>`;
+    }
+
     const people = m.peopleTags || [];
     const tags = m.generalTags || [];
     if (people.length || tags.length) {
@@ -1271,11 +1681,11 @@
       html += '</div>';
     }
 
-    if (m.updated && m.created && m.updated - m.created > 60000) {
-      html += `<p class="detail-footnote">Saved ${escapeHtml(relativeTime(m.created))} · edited ${escapeHtml(relativeTime(m.updated))}</p>`;
-    } else if (m.created) {
-      html += `<p class="detail-footnote">Saved ${escapeHtml(relativeTime(m.created))}</p>`;
-    }
+    const seen = VISIBILITY_LABELS[visibilityOf(m)];
+    const saved = m.updated && m.created && m.updated - m.created > 60000
+      ? `Saved ${relativeTime(m.created)} · edited ${relativeTime(m.updated)}`
+      : (m.created ? `Saved ${relativeTime(m.created)}` : '');
+    html += `<p class="detail-footnote">${escapeHtml(seen)}${saved ? ' · ' + escapeHtml(saved) : ''}</p>`;
 
     const content = $('detailContent');
     content.innerHTML = html;
@@ -1298,14 +1708,26 @@
 
   async function deleteCurrent() {
     if (!state.detailId) return;
-    if (!confirm('Delete this memory? This cannot be undone.')) return;
     const id = state.detailId;
+    const m = await loadMemory(id);
+    const n = m && m.photos ? m.photos.length : 0;
+    const msg = n
+      ? `Delete this memory? Its ${plural(n, 'photo', 'photos')} will go back to your Photos tab.`
+      : 'Delete this memory? This cannot be undone.';
+    if (!confirm(msg)) return;
+    for (const p of (m && m.photos) || []) {
+      const rec = await getPhoto(p.id);
+      if (rec && rec.memoryId === id) await putPhoto({ ...rec, memoryId: null });
+    }
     await deleteMemoryData(id);
     invalidateThumb(id);
     state.memories = await loadAllMemories();
+    await loadPhotos();
+    refreshBuckets();
     refreshDatalists();
     closeDetail();
     await renderList();
+    renderPhotos();
     toast('Memory deleted');
   }
 
@@ -1315,6 +1737,148 @@
     closeDetail();
     setTimeout(() => openModal(id), 300);
   }
+
+  // ============= PHOTO INBOX =============
+  // Photos brought in from the camera roll wait here, grouped into moments,
+  // until they're part of a memory.
+  const PH = window.LegacyPhotos;
+
+  async function loadPhotos() {
+    try { state.photos = await idbGetAll(STORE_PHOTOS); } catch { state.photos = []; }
+  }
+  function refreshBuckets() {
+    const inbox = state.photos.filter(p => !p.memoryId);
+    state.home = PH.estimateHome(state.photos);
+    state.allBuckets = PH.bucketize(inbox, state.home);
+    state.buckets = state.allBuckets.filter(b => !state.dismissed.includes(b.id));
+  }
+
+  let photosToken = 0;
+  async function renderPhotos() {
+    const token = ++photosToken;
+    const n = state.buckets.length;
+    $('bucketCount').textContent = n;
+    $('bucketCountLabel').textContent = n === 1 ? 'moment waiting for a story' : 'moments waiting for a story';
+    $('photosBadge').hidden = !n;
+    $('photosBadge').textContent = n > 99 ? '99+' : String(n);
+
+    const el = $('bucketList');
+    const list = state.showHidden ? state.allBuckets : state.buckets;
+    const hiddenCount = state.allBuckets.length - state.buckets.length;
+    const hiddenToggle = hiddenCount
+      ? `<button type="button" class="link-btn bucket-hidden-toggle" id="bucketHiddenToggle">${state.showHidden ? 'Hide the ones I set aside' : `Show ${plural(hiddenCount, 'moment', 'moments')} I set aside`}</button>`
+      : '';
+
+    if (!state.photos.length) {
+      el.innerHTML = `<div class="empty-state"><p>No photos yet. Choose a handful (a trip, a birthday, an ordinary Tuesday) and Legacy will sort them into moments.</p></div>`;
+      return;
+    }
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state"><p>Every moment here has its story. Bring in more photos any time.</p>${hiddenToggle}</div>`;
+      bindHiddenToggle();
+      return;
+    }
+
+    const thumbs = await Promise.all(list.map(b => Promise.all(b.photos.slice(0, 4).map(p => photoThumbUrl(p.id)))));
+    if (token !== photosToken) return;
+
+    const kindLabel = { trip: 'Trip', day: 'Day', undated: 'Undated' };
+    el.innerHTML = list.map((b, i) => {
+      const more = b.photos.length - 4;
+      const tiles = thumbs[i].map((u, j) => `<div class="mosaic-tile">${u ? `<img src="${u}" alt="" loading="lazy">` : ''}${j === 3 && more > 0 ? `<span class="mosaic-more">+${more}</span>` : ''}</div>`).join('');
+      const dismissed = state.dismissed.includes(b.id);
+      const map = PH.mapsUrl(b.center);
+      return `<article class="bucket-card${dismissed ? ' is-dismissed' : ''}">
+        <div class="bucket-mosaic n${Math.min(4, b.photos.length)}">${tiles}</div>
+        <div class="bucket-body">
+          <span class="bucket-kind">${kindLabel[b.kind]}</span>
+          <h3 class="bucket-title">${escapeHtml(PH.bucketTitle(b))}</h3>
+          <p class="bucket-sub">${escapeHtml(PH.bucketSubtitle(b))}${map && b.kind === 'trip' ? ` · <a href="${map}" target="_blank" rel="noopener">where?</a>` : ''}</p>
+          <div class="bucket-actions">
+            <button type="button" class="btn-primary bucket-tell" data-tell="${escapeHtml(b.id)}">Tell this story</button>
+            <button type="button" class="btn-secondary bucket-hide" data-hide="${escapeHtml(b.id)}">${dismissed ? 'Bring back' : 'Not now'}</button>
+          </div>
+        </div>
+      </article>`;
+    }).join('') + hiddenToggle;
+
+    el.querySelectorAll('[data-tell]').forEach(btn => btn.addEventListener('click', () => {
+      const b = state.allBuckets.find(x => x.id === btn.dataset.tell);
+      if (b) openModal(null, { bucket: b });
+    }));
+    el.querySelectorAll('[data-hide]').forEach(btn => btn.addEventListener('click', async () => {
+      const bid = btn.dataset.hide;
+      state.dismissed = state.dismissed.includes(bid)
+        ? state.dismissed.filter(x => x !== bid)
+        : [...state.dismissed, bid];
+      try { await saveKey('dismissedBuckets', state.dismissed); } catch {}
+      refreshBuckets();
+      renderPhotos();
+      renderOnThisDay();
+    }));
+    bindHiddenToggle();
+  }
+  function bindHiddenToggle() {
+    const t = $('bucketHiddenToggle');
+    if (t) t.addEventListener('click', () => { state.showHidden = !state.showHidden; renderPhotos(); });
+  }
+
+  let importingPhotos = false;
+  async function importPhotos(files) {
+    if (importingPhotos) return;
+    importingPhotos = true;
+    $('importProgress').hidden = false;
+    $('photoImportBtn').disabled = true;
+    const known = new Set(state.photos.map(p => `${p.name}|${p.size}`));
+    let added = 0, skipped = 0, failed = 0;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        $('importLabel').textContent = `Reading ${i + 1} of ${files.length}…`;
+        $('importBarFill').style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
+        const isImage = /^image\//.test(f.type) || /\.(heic|heif|jpe?g|png|webp|gif|avif)$/i.test(f.name);
+        const key = `${f.name}|${f.size}`;
+        if (!isImage || known.has(key)) { skipped++; continue; }
+        try {
+          const meta = await PH.readPhotoMeta(f);
+          const thumb = await PH.makeThumb(f);
+          const rec = {
+            id: newPhotoId(), blob: f, thumb, name: f.name, size: f.size, type: f.type,
+            ...meta, importedAt: Date.now(), memoryId: null,
+          };
+          await putPhoto(rec);
+          state.photos.push(rec);
+          known.add(key);
+          added++;
+        } catch (err) {
+          console.error('Photo import failed', f.name, err);
+          if (err && err.name === 'QuotaExceededError') { toast('Out of storage space'); break; }
+          failed++;
+        }
+      }
+    } finally {
+      importingPhotos = false;
+      $('importProgress').hidden = true;
+      $('photoImportBtn').disabled = false;
+    }
+    const before = state.buckets.length;
+    refreshBuckets();
+    await renderPhotos();
+    renderOnThisDay();
+    if (added) requestPersistence();
+    const parts = [];
+    if (added) parts.push(`${plural(added, 'photo', 'photos')} added`);
+    if (skipped) parts.push(`${skipped} already here`);
+    if (failed) parts.push(`${failed} couldn't be read`);
+    const found = state.buckets.length - before;
+    toast(parts.join(', ') + (found > 0 ? ` · ${plural(found, 'new moment', 'new moments')}` : ''));
+  }
+  $('photoImportBtn').addEventListener('click', () => $('photoImportInput').click());
+  $('photoImportInput').addEventListener('change', async (e) => {
+    const files = [...e.target.files];
+    e.target.value = '';
+    if (files.length) await importPhotos(files);
+  });
 
   // ============= EXPORT (archive .zip) =============
   function downloadBlob(blob, filename) {
@@ -1330,23 +1894,39 @@
   }
 
   let exporting = false;
-  async function exportAll() {
+  // mode 'full': everything, your backup. 'family': leaves out "Just me" memories,
+  // questions, and photo locations, ready to hand on.
+  async function exportAll(mode = 'full') {
     if (exporting) return;
-    if (state.memories.length === 0) {
-      toast('No memories to export');
+    const family = mode === 'family';
+    const source = family ? state.memories.filter(m => visibilityOf(m) !== 'private') : state.memories;
+    if (source.length === 0) {
+      toast(family ? 'Nothing is marked Family or Anyone yet' : 'No memories to export');
       return;
     }
     const A = window.LegacyArchive;
     exporting = true;
-    toast('Preparing archive…');
+    toast(family ? 'Preparing family edition…' : 'Preparing archive…');
     try {
       const exportedAt = Date.now();
-      const folder = `legacy-archive-${todayISO()}`;
+      const folder = family ? `legacy-family-edition-${todayISO()}` : `legacy-archive-${todayISO()}`;
       const files = [];
       const records = [];
 
-      for (const m of sortMemories(state.memories)) {
+      for (const m of sortMemories(source)) {
         const rec = { ...m };
+        if (m.photos && m.photos.length) {
+          rec.photos = [];
+          for (const p of m.photos) {
+            const r = await getPhoto(p.id);
+            if (!r || !r.blob) continue;
+            const path = `photos/${p.id}.${A.extForMime(r.blob.type || r.type, 'jpg')}`;
+            files.push({ name: `${folder}/${path}`, data: r.blob });
+            const out = { id: p.id, caption: p.caption || '', path, takenAt: r.takenAt || null, localDate: r.localDate || null };
+            if (!family && r.lat != null) { out.lat = r.lat; out.lon = r.lon; }
+            rec.photos.push(out);
+          }
+        }
         if (m.hasImage) {
           const blob = await idbGet(STORE_IMAGES, m.id);
           if (blob) {
@@ -1370,8 +1950,9 @@
         schema_version: SCHEMA_VERSION,
         exported_at: new Date(exportedAt).toISOString(),
         user: { name: state.settings.name || null },
-        plan: state.plan,
-        questions: state.questions,
+        edition: family ? 'family' : 'full',
+        plan: family ? { ...state.plan, backupLocation: '' } : state.plan,
+        questions: family ? [] : state.questions,
         description: 'Legacy archive. Media files live alongside this file; see docs/EXPORT_FORMAT.md.',
         memories: records,
       };
@@ -1384,6 +1965,10 @@
       const zip = await A.buildZip(files);
       downloadBlob(zip, `${folder}.zip`);
 
+      if (family) {
+        toast(`Family edition: ${plural(records.length, 'memory', 'memories')}`);
+        return;
+      }
       state.meta.lastExportAt = exportedAt;
       try { await saveMeta(state.meta); } catch (err) { console.error(err); }
       renderBackupBanner();
@@ -1420,9 +2005,15 @@
         };
         getMedia = async (rec) => {
           const image = await fromPath(rec.image);
+          const photos = [];
+          for (const p of Array.isArray(rec.photos) ? rec.photos : []) {
+            const blob = p && await fromPath(p.path);
+            if (blob) photos.push({ meta: p, blob });
+          }
           return {
             image: image && rec.imageMime ? new Blob([image], { type: rec.imageMime }) : image,
             audio: await fromPath(rec.audio),
+            photos,
           };
         };
       } else {
@@ -1430,6 +2021,7 @@
         getMedia = async (rec) => ({
           image: typeof rec.imageData === 'string' ? dataUrlToBlob(rec.imageData) : null,
           audio: typeof rec.audioData === 'string' ? dataUrlToBlob(rec.audioData) : null,
+          photos: [],
         });
       }
     } catch (err) {
@@ -1457,7 +2049,20 @@
           continue;
         }
 
-        const { image: imageBlob, audio: audioBlob } = await getMedia(raw);
+        const { image: imageBlob, audio: audioBlob, photos: galleryIn } = await getMedia(raw);
+        const photos = [];
+        for (const { meta, blob } of galleryIn) {
+          const pid = typeof meta.id === 'string' && meta.id ? meta.id : newPhotoId();
+          await putPhoto({
+            id: pid, blob, thumb: await window.LegacyPhotos.makeThumb(blob),
+            name: String(meta.path || '').split('/').pop(), size: blob.size, type: blob.type,
+            takenAt: meta.takenAt || null, localDate: meta.localDate || null,
+            lat: meta.lat != null ? meta.lat : null, lon: meta.lon != null ? meta.lon : null,
+            source: meta.takenAt ? 'exif' : 'none', importedAt: Date.now(), memoryId: id,
+          });
+          forgetPhotoUrl(pid);
+          photos.push({ id: pid, caption: String(meta.caption || '') });
+        }
         const memory = {
           id,
           schema_version: SCHEMA_VERSION,
@@ -1468,6 +2073,12 @@
           story: raw.story || '',
           prompt: raw.prompt || null,
           askedBy: raw.askedBy || null,
+          category: raw.category || null,
+          recipient: raw.recipient || null,
+          occasion: raw.occasion || null,
+          visibility: ['private', 'family', 'public'].includes(raw.visibility) ? raw.visibility : 'private',
+          followUps: Array.isArray(raw.followUps) ? raw.followUps.filter(f => f && f.q && f.a).map(f => ({ q: String(f.q), a: String(f.a) })) : [],
+          photos,
           peopleTags: Array.isArray(raw.peopleTags) ? raw.peopleTags : [],
           generalTags: Array.isArray(raw.generalTags) ? raw.generalTags : [],
           hasImage: !!imageBlob,
@@ -1517,8 +2128,11 @@
     }
 
     state.memories = await loadAllMemories();
+    await loadPhotos();
+    refreshBuckets();
     refreshDatalists();
     await renderList();
+    renderPhotos();
     if (isOpen('settingsModal')) renderBackupStatus();
     if (added + updated > 0) requestPersistence();
 
@@ -1608,9 +2222,10 @@
   $('closeDetail').addEventListener('click', closeDetail);
   $('deleteBtn').addEventListener('click', deleteCurrent);
   $('editBtn').addEventListener('click', editCurrent);
-  $('exportBtn').addEventListener('click', exportAll);
-  $('settingsExportBtn').addEventListener('click', exportAll);
-  $('backupBannerBtn').addEventListener('click', exportAll);
+  $('exportBtn').addEventListener('click', () => exportAll('full'));
+  $('settingsExportBtn').addEventListener('click', () => exportAll('full'));
+  $('familyExportBtn').addEventListener('click', () => exportAll('family'));
+  $('backupBannerBtn').addEventListener('click', () => exportAll('full'));
 
   $('aboutBtn').addEventListener('click', openAbout);
   $('closeAbout').addEventListener('click', closeAbout);
@@ -1649,10 +2264,14 @@
       state.meta = await loadMeta();
       state.questions = await loadKey('questions', []);
       state.plan = { ...DEFAULT_PLAN, ...(await loadKey('plan', {})) };
+      state.dismissed = await loadKey('dismissedBuckets', []);
       state.memories = await loadAllMemories();
+      await loadPhotos();
+      refreshBuckets();
       applyPersonalization();
       refreshDatalists();
       await renderList();
+      renderPhotos();
       const handled = await handleIncomingLink();
       if (!handled) showWelcomeIfFirstTime();
       if (state.memories.length) requestPersistence();

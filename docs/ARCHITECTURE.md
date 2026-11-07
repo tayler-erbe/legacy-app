@@ -37,6 +37,10 @@ This document captures the design decisions behind Legacy and the planned path f
 - Family "ask me" links (no backend: the question travels in the URL).
 - Legacy plan (recipients, archive location, AI consent) plus a printable family letter.
 - Weekly reminder via a calendar (`.ics`) file.
+- Guided start ("what do you feel like sharing today?") with a research-based prompt library ([`PROMPT_RESEARCH.md`](./PROMPT_RESEARCH.md)); optional follow-up questions.
+- Camera-roll import: on-device EXIF reading (date + GPS), grouping into days and trips, "tell this story", photo collections with per-photo notes.
+- Per-memory visibility (Just me / Family / Anyone) and a family-edition archive.
+- Speak-to-type dictation via the browser's speech recognition.
 - Backup nudges and a persistent-storage request so the browser doesn't evict the vault.
 - iOS Safari install to home screen; works offline (network-first service worker).
 
@@ -44,6 +48,43 @@ This document captures the design decisions behind Legacy and the planned path f
 - Auth, accounts, multi-device sync.
 - Transcription (audio is saved as-is; user types the story for now).
 - The AI bot.
+
+---
+
+## Stage 1.5: Native iPhone app
+
+**Why:** the web app can only see photos the user explicitly picks. What
+people actually want is the thing Apple Photos already does, but for *their
+own* stories: "Three years ago today you were in Paris. Want to tell that
+story?" That needs a native app. The web app proves the flow first, and the
+native app makes it effortless.
+
+**What native adds:**
+- **PhotoKit**: read the camera roll directly, with the user's permission,
+  instead of picking files. It gives reliable creation dates and locations
+  (Safari's photo picker may remove GPS data; test on a real device), plus
+  Apple's own Moments and People groupings.
+- **Background moment detection** and **local notifications**: "Here's a trip
+  you took. Would you like to tell its story?" This runs on-device, and no
+  photo leaves the phone to make the suggestion.
+- **On-device speech recognition** (`SFSpeechRecognizer` with
+  `requiresOnDeviceRecognition`) so dictation and transcripts never touch a
+  server.
+- **Reverse geocoding** with CLGeocoder, so "about 420 km from home" can
+  become "Paris".
+
+**Approach:**
+- Expo / React Native, so the prompt library (`prompts.js`), grouping logic
+  (`photos.js`) and archive format (`archive.js`) can be reused almost
+  unchanged.
+- `expo-media-library` for the camera roll, `expo-notifications` for
+  reminders, and a small native module for on-device speech.
+- The same archive format (see `EXPORT_FORMAT.md`), so the web app and the
+  native app read each other's archives.
+- Needs an Apple Developer account ($99/yr) and App Store review.
+
+**Privacy line:** photos are read in place, never uploaded. A memory only
+copies the photos the user chose to attach to it.
 
 ---
 

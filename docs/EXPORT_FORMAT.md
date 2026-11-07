@@ -8,7 +8,8 @@ there. No app, account, or internet connection needed.
 legacy-archive-2026-11-06/
   index.html      a readable book of every memory (static HTML: no JavaScript, no network)
   memories.json   every memory as structured data: the format described below
-  images/         original photos, named <memory id>.<ext>
+  images/         each memory's main photo, named <memory id>.<ext>
+  photos/         photo collections from the camera roll, named <photo id>.<ext>
   audio/          original recordings, named <memory id>.<ext>
   README.txt      plain-text instructions
 ```
@@ -16,17 +17,26 @@ legacy-archive-2026-11-06/
 Files are stored without compression, because photos and audio are already
 compressed. That keeps the archive recoverable with any zip tool ever made.
 
+There are two editions:
+- The **full archive** has everything and is your backup.
+- The **family edition** (`legacy-family-edition-YYYY-MM-DD.zip`) leaves out
+  memories marked *Just me*, the list of family questions, your archive
+  location, and photo GPS coordinates. It's meant to be handed on. Note that
+  the original photo files can still carry location in their own embedded EXIF
+  data.
+
 The app restores archives from **Settings → Backup & restore → Restore**. It
 also accepts zips that have been unzipped and re-zipped (deflate), on browsers
 with `DecompressionStream`, and older single-file `.json` backups (format 1.x,
 below).
 
-## memories.json (2.0)
+## memories.json (2.1)
 
 | Field            | Type     | Notes |
 |------------------|----------|-------|
 | `format`         | string   | `"legacy-archive"` |
-| `schema_version` | string   | `"2.0"` |
+| `schema_version` | string   | `"2.1"` |
+| `edition`        | string   | `"full"` or `"family"` (2.1+). |
 | `exported_at`    | string   | ISO 8601 timestamp. |
 | `user`           | object   | `{ "name": string \| null }` |
 | `plan`           | object   | The legacy plan: `{ recipients, backupLocation, aiMode }`. `aiMode` is `"undecided"`, `"archive"` (never use AI), or `"grounded"` (answer only from my own recordings and words). |
@@ -47,6 +57,12 @@ below).
 | `story`           | string          | The written story, verbatim. |
 | `prompt`          | string \| null  | The question this memory answers, if any. |
 | `askedBy`         | string \| null  | Who asked that question, if it came from a family "ask me" link (2.0+). |
+| `category`        | string \| null  | Guided-start category: `someone`, `everyday`, `story`, `roots`, `believe`, `advice`, `repair`, or `photo` (2.1+). |
+| `recipient`       | string \| null  | Who the memory is for, e.g. `"Sarah"` (2.1+). |
+| `occasion`        | string \| null  | When they should hear it, e.g. `"On a hard day"` (2.1+). |
+| `visibility`      | string          | `"private"` (Just me), `"family"`, or `"public"` (Anyone). Missing means private (2.1+). |
+| `followUps`       | array           | Answered follow-up questions: `[{ q, a }]` (2.1+). |
+| `photos`          | array           | Photo collection: `[{ id, caption, path, takenAt, localDate, lat?, lon? }]`. `path` is relative, e.g. `photos/ph_x.jpg`. Coordinates are only in the full archive (2.1+). |
 | `peopleTags`      | string[]        | Names of people in the memory. |
 | `generalTags`     | string[]        | Lower-cased free-form tags. |
 | `hasImage`        | boolean         | |
@@ -82,6 +98,8 @@ same top-level shape (minus `plan` and `questions`). Media was inline:
 
 ## Version history
 
+- **2.1**: photo collections with captions, follow-up answers, recipient and
+  occasion, visibility, and the family edition.
 - **2.0**: zip archive with an offline `index.html` book and media as real
   files; added `plan`, `questions`, `askedBy`.
 - **1.2**: added `format`, `prompt`, `imageMime`; `dateApproximate` became
