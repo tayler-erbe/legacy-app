@@ -1,23 +1,14 @@
-# LinkedIn post (draft)
+# LinkedIn post (draft, ~150 words)
 
-While finishing the accessibility features on the Legislative Intelligence Platform, I had to decide how to make every chart usable for people who can't see it.
+When I built the accessibility features for the Legislative Intelligence Platform, my first version used AI to describe the charts. I rebuilt it without AI.
 
-My first version used AI to describe the charts. It worked, but it wasn't the right answer. AI brings hosting, per-call cost, validation, abuse limits, and an error rate you have to manage forever.
+Chart Details now calculates each description straight from the chart's data, next to an accessible table and an Excel download. Nothing is generated, so nothing gets made up.
 
-So I rebuilt it. Chart Details now computes each description with rules, straight from the chart's own data, next to an accessible table and an Excel download. Nothing is generated. Every sentence can be checked against the source.
+Then I checked the research to see if I'd made the right call. Even with the data table in hand, GPT-5.4 and Gemini got about 1 in 5 numbers wrong. On hard chart questions, the best model scored 63%. People scored 93%. And the busier the chart, the worse the AI gets, which is exactly where screen-reader users need the help most.
 
-Then I went through the research to see whether that was the right call. It was:
-
-• Even with the data table in hand, GPT-5.4 and Gemini got about 1 in 5 numbers wrong (2026 study, 1,224 descriptions).
-• 82% of AI-written chart captions contained at least one factual error when people checked them (ACL 2024).
-• On hard chart questions, the best model scored 63%. People scored 93% (NeurIPS 2025).
-• Blind readers asked for straight facts about the data (MIT, IEEE VIS 2021), which is exactly what rules compute best.
-
-AI may get there. But if you already have the data, why make your readers depend on a model guessing at a picture of it? Rule-based descriptions aren't hard to build, they cost almost nothing to run, and they're defensible.
+AI will get there. But if you already have the data, why make readers trust a model's guess about a picture of it?
 
 Full brief and every source: [LINK]
-
-#Accessibility #DataVisualization #AI #A11y #HigherEd
 
 ---
 
