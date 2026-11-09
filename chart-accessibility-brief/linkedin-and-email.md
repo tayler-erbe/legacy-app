@@ -60,11 +60,7 @@ Dimuthu, thank you for connecting me with Keith and Jemma. I'll follow up with b
 
 Rick, Pramod mentioned you may be exploring something similar, so I wanted to share one distinction from how the platform works now. My first version did use AI to write the chart descriptions. I rebuilt it so the Chart Details content is calculated directly from each chart's underlying data, with a plain-language description, an accessible data table and an Excel download. Every statement can be traced back to the source data, and the description stays objective by design, which was Mark's main goal.
 
-I made that change after looking at the research:
-
-- GPT-5.4 and Gemini misstated about 1 in 5 chart numbers, and giving them the chart's data table helped by only a few points (2026 study, 1,224 descriptions).
-- In a human check of 1,187 AI-written chart captions, 82% contained at least one factual error (2023-era models).
-- On hard chart questions, the best model scored 63% while people scored 93%, and accuracy fell further as charts got busier.
+The research backed that up. Even the newest models still get a real share of chart facts wrong, handing them the data only helps a little, and they struggle most on busy charts.
 
 AI still played a big part: it helped me build and test the rules. It just doesn't write what the reader sees. The same approach should carry over to Tableau, since the data behind each visualization is already there.
 
