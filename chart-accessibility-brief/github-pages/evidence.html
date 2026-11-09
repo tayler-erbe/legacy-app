@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Charts Without Guesswork · Evidence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;700;800&display=swap">
+<style>
+/* Layout: same column as the brief; one section per study, each opening with its takeaway. */
+:root {
+  --paper: #f4f6f9; --surface: #ffffff; --ink: #121722; --muted: #4a5468; --rule: #d8dde6;
+  --accent: #1c5fd4; --accent-soft: #e5edfb; --alert: #b0381d; --alert-soft: #fbebe6;
+  --font-body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1218; --surface: #161c25; --ink: #e8ecf2; --muted: #a5b0c3; --rule: #2a3342;
+    --accent: #84aaff; --accent-soft: #1a2741; --alert: #ff8f70; --alert-soft: #3a1f18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1218; --surface: #161c25; --ink: #e8ecf2; --muted: #a5b0c3; --rule: #2a3342;
+  --accent: #84aaff; --accent-soft: #1a2741; --alert: #ff8f70; --alert-soft: #3a1f18;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--font-body); font-size: 1.0625rem; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding-block: 2.5rem 4rem; display: grid; gap: 3rem; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+p, ul, ol { margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.875rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.back { font-weight: 700; width: fit-content; }
+header { display: grid; gap: 0.9rem; }
+header h1 { font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem); font-weight: 800; letter-spacing: -0.01em; }
+.lede { color: var(--muted); font-size: 1.2rem; }
+nav ol { padding-left: 1.2rem; display: grid; gap: 0.25rem; font-size: 0.95rem; }
+section { display: grid; gap: 0.9rem; scroll-margin-top: 1.5rem; }
+section h2 { font-size: 1.45rem; font-weight: 800; }
+.takeaway { font-size: 1.15rem; font-weight: 700; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.35rem 1rem; padding: 1rem 1.1rem; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; font-size: 0.95rem; }
+.facts dt { font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding-top: 0.15rem; }
+.facts dd { margin: 0; }
+.caveat { padding: 0.8rem 1rem; border-radius: 8px; background: var(--alert-soft); font-size: 0.95rem; }
+.caveat strong { color: var(--alert); }
+.src { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); }
+ul.points { padding-left: 1.2rem; display: grid; gap: 0.4rem; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 36rem; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+.tag.read { background: var(--accent-soft); color: var(--accent); }
+.tag.check { background: var(--alert-soft); color: var(--alert); }
+.formula { font-family: var(--font-mono); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 0.75rem 1rem; overflow-x: auto; }
+footer { border-top: 1px solid var(--rule); padding-top: 1.5rem; font-size: 0.875rem; color: var(--muted); display: grid; gap: 0.4rem; }
+@media (max-width: 640px) {
+  .facts { grid-template-columns: 1fr; }
+  .facts dt { padding-top: 0.5rem; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <a class="back" href="./">Back to the brief</a>
+    <p class="eyebrow">Evidence · November 2026</p>
+    <h1>The research behind “describe the chart from the data”</h1>
+    <p class="lede">Each section opens with its takeaway, then the study, the numbers, the limits and the link. Sources marked “Read in full” were checked against the original paper.</p>
+    <nav aria-label="On this page">
+      <ol>
+        <li><a href="#reading">How to read these numbers</a></li>
+        <li><a href="#data-supplied">AI with the data supplied</a></li>
+        <li><a href="#captions">AI-written chart captions</a></li>
+        <li><a href="#hard-questions">Hard chart questions</a></li>
+        <li><a href="#leaderboards">Leaderboard scores</a></li>
+        <li><a href="#delegation">Errors that build up</a></li>
+        <li><a href="#rules">Rules versus AI for text from data</a></li>
+        <li><a href="#blind-readers">What blind readers want</a></li>
+        <li><a href="#sources">All sources</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section id="reading">
+    <h2>How to read these numbers</h2>
+    <p class="takeaway">A benchmark score is per question. A description makes many claims, so its chance of being fully right is lower.</p>
+    <p>If a model is right 93% of the time per claim and a description makes five independent claims, the chance that all five are right is about 70%.</p>
+    <p class="formula">0.93 × 0.93 × 0.93 × 0.93 × 0.93 ≈ 0.70</p>
+    <p>No published benchmark measures how often a full AI chart description is entirely correct. The closest evidence is the caption audit and the numeric check below.</p>
+  </section>
+
+  <section id="data-supplied">
+    <h2>AI with the data supplied</h2>
+    <p class="takeaway">Even with the data table in hand, top 2026 models misstated about 1 in 5 numbers they called directly supported.</p>
+    <dl class="facts">
+      <dt>Study</dt><dd>Chart-Supported or Model-Supplied? Examining MLLM-Generated Claims for Accessible Visualization (arXiv, September 2026)</dd>
+      <dt>Models</dt><dd>GPT-5.4, Gemini 3.5 Flash, Llama 4 Scout 17B</dd>
+      <dt>Scale</dt><dd>102 charts from 4 sources, 4 input conditions, 1,224 descriptions, 4,210 numbers checked</dd>
+      <dt>Result</dt><dd>Numbers matching the data within 2%: GPT-5.4 79.0%, Gemini 79.7%, Llama 71.3%, overall 77.5%</dd>
+      <dt>Also</dt><dd>Adding the image to the data gave no consistent gain. 73.9% of “real-world significance” claims relied on information outside the chart.</dd>
+    </dl>
+    <p class="caveat"><strong>Limits.</strong> The check matches numbers only, so a matching number can still sit in a wrong sentence. Some mismatches may come from filtering or rounding between the table and the chart. The models labeled their own claims.</p>
+    <p class="src"><a href="https://arxiv.org/abs/2607.25021">arxiv.org/abs/2607.25021</a> · <span class="tag read">Read in full</span></p>
+  </section>
+
+  <section id="captions">
+    <h2>AI-written chart captions</h2>
+    <p class="takeaway">82% of AI chart captions had at least one factual error when people checked them.</p>
+    <dl class="facts">
+      <dt>Study</dt><dd>Do LVLMs Understand Charts? Analyzing and Correcting Factual Errors in Chart Captioning (Huang et al., ACL Findings 2024)</dd>
+      <dt>Scale</dt><dd>1,187 captions and 5,323 sentences, annotated by people</dd>
+      <dt>Result</dt><dd>82.06% of captions had an error. GPT-4V and Bard: 81.27% of captions (321 of 395), about 43% of sentences. A pipeline that turned the chart into a table, then had GPT-4 write: 86% of captions.</dd>
+      <dt>Error types</dt><dd>Wrong values, wrong labels, wrong trend direction, exaggerated change, facts not in the chart</dd>
+    </dl>
+    <p class="caveat"><strong>Limits.</strong> These are 2023-era models. Today's models are better, but no one has repeated this full-caption audit on 2026 models.</p>
+    <p class="src"><a href="https://arxiv.org/abs/2312.10160">arxiv.org/abs/2312.10160</a> · <span class="tag read">Read in full</span></p>
+  </section>
+
+  <section id="hard-questions">
+    <h2>Hard chart questions</h2>
+    <p class="takeaway">On realistic chart questions, the best model scored 63% against 93% for people.</p>
+    <div class="table-scroll" role="region" aria-label="ChartMuseum results" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">Reader</th><th scope="col">Accuracy</th></tr></thead>
+        <tbody>
+          <tr><td>People</td><td class="num">93.0%</td></tr>
+          <tr><td>Gemini 2.5 Pro</td><td class="num">63.0%</td></tr>
+          <tr><td>Claude 3.7 Sonnet (thinking)</td><td class="num">61.7%</td></tr>
+          <tr><td>o4-mini (high)</td><td class="num">61.5%</td></tr>
+          <tr><td>o3 (high)</td><td class="num">60.9%</td></tr>
+          <tr><td>Qwen2.5-VL-72B (best open model)</td><td class="num">38.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Every model scored 35 to 55 points lower on questions that need visual reasoning than on questions answerable from text. Reasoning modes added little.</p>
+    <p class="caveat"><strong>Limits.</strong> Models tested were those available in 2025. Newer models likely score higher.</p>
+    <p class="src">ChartMuseum (Tang et al., NeurIPS 2025) · <a href="https://arxiv.org/abs/2505.13444">arxiv.org/abs/2505.13444</a> · <span class="tag read">Read in full</span></p>
+  </section>
+
+  <section id="leaderboards">
+    <h2>Leaderboard scores</h2>
+    <p class="takeaway">On easier, saturated tests, top 2026 models now beat people, which is why those scores mislead.</p>
+    <ul class="points">
+      <li><strong>CharXiv (reasoning):</strong> top 2026 models about 93% on public leaderboards; people 80.5%; GPT-4o was 47.1% at launch in 2024.</li>
+      <li><strong>ChartQA vs ChartQAPro:</strong> Claude 3.5 Sonnet scored 90.5% on ChartQA but 55.8% on the harder ChartQAPro. Self-reported 2026 scores on ChartQAPro are around 71%.</li>
+    </ul>
+    <p class="caveat"><strong>Limits.</strong> Leaderboard numbers come from aggregators and vendors with different settings and change monthly. Quote them as approximate.</p>
+    <p class="src"><a href="https://charxiv.github.io/">CharXiv</a> · <a href="https://arxiv.org/abs/2504.05506">ChartQAPro</a> · <span class="tag check">From summaries, verify before quoting</span></p>
+  </section>
+
+  <section id="delegation">
+    <h2>Errors that build up</h2>
+    <p class="takeaway">When AI runs again and again without checks, small errors add up. Frontier models lost 25% of content over 20 tasks.</p>
+    <dl class="facts">
+      <dt>Study</dt><dd>LLMs Corrupt Your Documents When You Delegate (Laban, Schnabel and Neville, Microsoft Research, April 2026)</dd>
+      <dt>Scale</dt><dd>19 models, 52 professional domains, 310 work environments, 20 delegated edits each</dd>
+      <dt>Result</dt><dd>Content kept after 20 edits: Gemini 3.1 Pro 80.9%, Claude 4.6 Opus 73.1%, GPT 5.4 71.5%. All 19 models averaged about 50% degradation.</dd>
+      <dt>Readiness</dt><dd>“Ready” means keeping 98% or more. The best model was ready in 11 of 52 domains. Only Python was ready for most models.</dd>
+    </dl>
+    <p class="src"><a href="https://arxiv.org/abs/2604.15597">arxiv.org/abs/2604.15597</a> · <a href="https://www.microsoft.com/en-us/research/blog/llms-corrupt-your-documents-when-you-delegate/">Microsoft Research blog</a> · <span class="tag read">Read in full</span></p>
+  </section>
+
+  <section id="rules">
+    <h2>Rules versus AI for text from data</h2>
+    <p class="takeaway">Rule-based systems made fewer meaning errors than neural and AI systems, though rules still need testing.</p>
+    <p>A study of 15 systems that turn structured data into text counted omissions, additions and repetitions in 30 outputs each.</p>
+    <div class="table-scroll" role="region" aria-label="Errors by system type" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">System type</th><th scope="col">Errors per 30 outputs</th></tr></thead>
+        <tbody>
+          <tr><td>Rule- and template-based (3 systems)</td><td class="num">27 to 36</td></tr>
+          <tr><td>GPT-3.5, no fine-tuning</td><td class="num">39</td></tr>
+          <tr><td>Llama-2 70B, no fine-tuning</td><td class="num">57</td></tr>
+          <tr><td>Fine-tuned neural systems (10)</td><td class="num">25 to 86</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caveat"><strong>Limits.</strong> The gap was modest and the LLMs were older. The lesson for Chart Details: rules are only as good as their coverage, so each rule needs tests.</p>
+    <p class="src">Huidrom, Belz and Lorandi, INLG 2024 · <a href="https://aclanthology.org/2024.inlg-main.47">aclanthology.org/2024.inlg-main.47</a> · <span class="tag read">Read in full</span></p>
+  </section>
+
+  <section id="blind-readers">
+    <h2>What blind readers want</h2>
+    <p class="takeaway">Blind readers asked for facts about the data. Those facts are the easiest content to compute from data.</p>
+    <ul class="points">
+      <li>30 blind and 90 sighted readers ranked chart descriptions. Most blind readers wanted descriptions to “stick to straight facts about the data,” without editorializing.</li>
+      <li>The authors define four levels of content. Levels 1 and 2 (what the chart encodes, plus statistics such as extremes and comparisons) can be computed directly when software has the data. Producing them from an image is “considerably more difficult.”</li>
+      <li>They recommend descriptions that convey overall trends and statistics.</li>
+    </ul>
+    <p class="src">Lundgard and Satyanarayan, IEEE VIS 2021 · <a href="https://vis.mit.edu/pubs/vis-text-model.pdf">vis.mit.edu/pubs/vis-text-model.pdf</a> · <span class="tag read">Read in full</span></p>
+  </section>
+
+  <section id="sources">
+    <h2>All sources</h2>
+    <div class="table-scroll" role="region" aria-label="Sources" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">Source</th><th scope="col">Used for</th><th scope="col">Status</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://arxiv.org/abs/2607.25021">Chart-Supported or Model-Supplied? (2026)</a></td><td>Numbers wrong with data supplied</td><td><span class="tag read">Read in full</span></td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2312.10160">Do LVLMs Understand Charts? (ACL Findings 2024)</a></td><td>Caption error rate</td><td><span class="tag read">Read in full</span></td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2505.13444">ChartMuseum (NeurIPS 2025)</a></td><td>Hard chart questions</td><td><span class="tag read">Read in full</span></td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2604.15597">LLMs Corrupt Your Documents When You Delegate (2026)</a></td><td>Errors that build up</td><td><span class="tag read">Read in full</span></td></tr>
+          <tr><td><a href="https://aclanthology.org/2024.inlg-main.47">Differences in Semantic Errors Made by Different Types of Data-to-text Systems (INLG 2024)</a></td><td>Rules versus AI</td><td><span class="tag read">Read in full</span></td></tr>
+          <tr><td><a href="https://vis.mit.edu/pubs/vis-text-model.pdf">Accessible Visualization via Natural Language Descriptions (IEEE VIS 2021)</a></td><td>What blind readers want</td><td><span class="tag read">Read in full</span></td></tr>
+          <tr><td><a href="https://charxiv.github.io/">CharXiv</a> and public leaderboards</td><td>Easy-benchmark scores</td><td><span class="tag check">Verify</span></td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2504.05506">ChartQAPro (2025)</a></td><td>Easy versus hard gap</td><td><span class="tag check">Verify</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>Prepared by Tayler Erbe, Doc Intelligence Lab. Current as of November 9, 2026. Research assistance from Claude; figures checked against the original papers where marked.</p>
+    <p><a href="./">Back to the brief</a></p>
+  </footer>
+</main>
+</body>
+</html>

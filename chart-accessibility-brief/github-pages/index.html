@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Charts Without Guesswork</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Research brief: why rule-based chart descriptions computed from the data beat AI-generated descriptions for accessibility.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;700;800&display=swap">
+<style>
+body{margin:0}
+/* Layout: one readable column; findings as rows of number + headline, evidence one click deeper. */
+:root {
+  --paper: #f4f6f9;
+  --surface: #ffffff;
+  --ink: #121722;
+  --muted: #4a5468;
+  --rule: #d8dde6;
+  --accent: #1c5fd4;
+  --accent-soft: #e5edfb;
+  --alert: #b0381d;
+  --alert-soft: #fbebe6;
+  --font-body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.6rem;
+  --step-3: clamp(2rem, 1.4rem + 3vw, 3.1rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1218; --surface: #161c25; --ink: #e8ecf2; --muted: #a5b0c3; --rule: #2a3342;
+    --accent: #84aaff; --accent-soft: #1a2741; --alert: #ff8f70; --alert-soft: #3a1f18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1218; --surface: #161c25; --ink: #e8ecf2; --muted: #a5b0c3; --rule: #2a3342;
+  --accent: #84aaff; --accent-soft: #1a2741; --alert: #ff8f70; --alert-soft: #3a1f18;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-body); font-size: var(--step-0); line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding-block: 3rem 4rem; display: grid; gap: 3.5rem; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.15; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* Hero */
+.hero { display: grid; gap: 1.1rem; }
+.hero h1 { font-size: var(--step-3); font-weight: 800; letter-spacing: -0.015em; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.lede { font-size: var(--step-1); color: var(--muted); max-width: 38rem; }
+.verdict {
+  display: grid; gap: 0.35rem; padding: 1.1rem 1.25rem; border-radius: 10px;
+  background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.verdict strong { font-size: var(--step-0); }
+
+/* Sections */
+section { display: grid; gap: 1.25rem; }
+section > h2 { font-size: var(--step-2); font-weight: 800; }
+.section-intro { color: var(--muted); max-width: 40rem; }
+
+/* Findings */
+.findings { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
+.finding { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0.4rem 1.25rem; padding-block: 1.25rem; border-bottom: 1px solid var(--rule); }
+.num { font-family: var(--font-mono); font-weight: 600; font-size: 2.1rem; line-height: 1; color: var(--alert); font-variant-numeric: tabular-nums; padding-top: 0.15rem; }
+.num.calm { color: var(--accent); font-size: 1.35rem; line-height: 1.2; }
+.finding-body { display: grid; gap: 0.45rem; min-width: 0; }
+.finding h3 { font-size: var(--step-1); font-weight: 700; }
+.finding p { color: var(--muted); }
+details { border-radius: 8px; }
+summary { cursor: pointer; color: var(--accent); font-weight: 700; font-size: var(--step--1); width: fit-content; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "+ "; font-family: var(--font-mono); }
+details[open] summary::before { content: "\2212 "; }
+.evidence { margin-top: 0.6rem; padding: 0.9rem 1rem; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; display: grid; gap: 0.5rem; font-size: var(--step--1); line-height: 1.55; }
+.evidence .src { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+/* Comparison */
+.table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: var(--step--1); }
+th, td { text-align: left; padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th { font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+tbody th { font-weight: 700; }
+tr:last-child th, tr:last-child td { border-bottom: 0; }
+.col-rules { background: var(--accent-soft); }
+thead .col-rules { color: var(--accent); }
+.no { color: var(--alert); font-weight: 700; }
+.yes { color: var(--accent); font-weight: 700; }
+
+/* Built + practice */
+.built { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.built div { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem; display: grid; gap: 0.3rem; align-content: start; }
+.built strong { font-size: var(--step-0); }
+.built span { color: var(--muted); font-size: var(--step--1); }
+.checklist { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.55rem; }
+.checklist li::marker { color: var(--accent); font-family: var(--font-mono); }
+.plain-list { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.45rem; color: var(--ink); }
+
+.next { border-top: 1px solid var(--rule); padding-top: 2rem; }
+.cta { display: inline-block; width: fit-content; padding: 0.75rem 1.1rem; border-radius: 8px; background: var(--ink); color: var(--paper); text-decoration: none; font-weight: 700; }
+.cta:hover { opacity: 0.9; }
+footer { font-size: var(--step--1); color: var(--muted); display: grid; gap: 0.4rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+
+@media (max-width: 640px) {
+  .wrap { padding-block: 2rem 3rem; gap: 2.75rem; }
+  .finding { grid-template-columns: 1fr; }
+  .built { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  details[open] .evidence { animation: open 160ms ease-out; }
+  @keyframes open { from { opacity: 0.4; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+}
+</style>
+
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Accessibility research brief · November 2026 · Tayler Erbe</p>
+    <h1>If you have the data, describe the chart <em>from the data</em>.</h1>
+    <p class="lede">I first built accessible chart descriptions with AI. The research changed my mind. Descriptions computed by rules from the chart's own data are cheaper, checkable, and free of AI hallucinations.</p>
+    <div class="verdict">
+      <strong>The short version</strong>
+      <p>Even the best 2026 AI models still get chart facts wrong, including when they are handed the data. A rule-based description cannot invent a number. Every sentence traces back to the data table, which readers can also download.</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="findings-h">
+    <h2 id="findings-h">What the research shows</h2>
+    <p class="section-intro">Five findings, each from a published study. Open any one for the details and the source.</p>
+    <ol class="findings">
+      <li class="finding">
+        <div class="num" aria-hidden="true">1 in 5</div>
+        <div class="finding-body">
+          <h3>Top AI models got about 1 in 5 numbers wrong, even with the data in hand.</h3>
+          <p>GPT-5.4 and Gemini were given each chart's data table. About 20% of the numbers they presented as "directly supported" still did not match it.</p>
+          <details>
+            <summary>Show the evidence</summary>
+            <div class="evidence">
+              <p>A 2026 study tested GPT-5.4, Gemini 3.5 Flash and Llama 4 Scout on 102 charts (1,224 descriptions). With the data table supplied, the share of stated numbers that matched the real data within 2% was 79.0% for GPT-5.4, 79.7% for Gemini and 71.3% for Llama. Adding the chart image on top of the data gave no consistent improvement.</p>
+              <p>The authors recommend that accessible descriptions separate claims backed by the data from interpretation the model adds itself.</p>
+              <p class="src">Source: <a href="https://arxiv.org/abs/2607.25021">Chart-Supported or Model-Supplied? Examining MLLM-Generated Claims for Accessible Visualization (2026)</a> · <a href="evidence.html#data-supplied">More detail</a></p>
+            </div>
+          </details>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="num" aria-hidden="true">82%</div>
+        <div class="finding-body">
+          <h3>82% of AI-written chart captions contained at least one factual error.</h3>
+          <p>People checked 1,187 captions sentence by sentence. Wrong values, wrong labels and wrong trend directions were common.</p>
+          <details>
+            <summary>Show the evidence</summary>
+            <div class="evidence">
+              <p>Researchers at Illinois, Columbia and Salesforce had people review AI chart captions. 82.06% had at least one factual error. GPT-4V and Bard, the strongest models at the time, were wrong in 81% of captions, and about 43% of their sentences contained an error.</p>
+              <p>These are 2023-era models. No one has repeated this full-caption audit on 2026 models, so treat it as the pattern, not today's exact rate.</p>
+              <p class="src">Source: <a href="https://arxiv.org/abs/2312.10160">Do LVLMs Understand Charts? Analyzing and Correcting Factual Errors in Chart Captioning (ACL Findings 2024)</a> · <a href="evidence.html#captions">More detail</a></p>
+            </div>
+          </details>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="num" aria-hidden="true">63%</div>
+        <div class="finding-body">
+          <h3>On hard chart questions, the best model scored 63%. People scored 93%.</h3>
+          <p>Models do well on easy benchmarks. When questions require actually reading the picture, accuracy drops sharply.</p>
+          <details>
+            <summary>Show the evidence</summary>
+            <div class="evidence">
+              <p>ChartMuseum has 1,162 expert-written questions on real charts. Gemini 2.5 Pro scored 63.0%, OpenAI o3 60.9%, and the best open model 38.5%. People scored 93.0%. On questions that need visual reasoning, every model dropped 35 to 55 points.</p>
+              <p>On older, easier tests, top 2026 models now score around 90% or higher. The gap opens on realistic questions.</p>
+              <p class="src">Source: <a href="https://arxiv.org/abs/2505.13444">ChartMuseum: Testing Visual Reasoning Capabilities of Large Vision-Language Models (NeurIPS 2025)</a> · <a href="evidence.html#hard-questions">More detail</a></p>
+            </div>
+          </details>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="num" aria-hidden="true">25%</div>
+        <div class="finding-body">
+          <h3>Over repeated tasks, frontier AI silently corrupted a quarter of the content.</h3>
+          <p>Microsoft Research found the errors were rare per step but severe, quiet and cumulative.</p>
+          <details>
+            <summary>Show the evidence</summary>
+            <div class="evidence">
+              <p>Across 52 professional domains and 19 models, Gemini 3.1 Pro, Claude 4.6 Opus and GPT 5.4 lost an average of 25% of document content after 20 delegated edits. The authors set "ready" at keeping 98% of content. The best model met that bar in only 11 of 52 domains.</p>
+              <p>This is about documents, not charts. It shows why output that runs on its own, again and again, needs checks.</p>
+              <p class="src">Source: <a href="https://arxiv.org/abs/2604.15597">LLMs Corrupt Your Documents When You Delegate (Microsoft Research, 2026)</a> · <a href="evidence.html#delegation">More detail</a></p>
+            </div>
+          </details>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="num calm" aria-hidden="true">Facts first</div>
+        <div class="finding-body">
+          <h3>Blind readers asked for straight facts about the data, not interpretation.</h3>
+          <p>The facts they wanted, such as trends, highs, lows and comparisons, can be computed directly from the data.</p>
+          <details>
+            <summary>Show the evidence</summary>
+            <div class="evidence">
+              <p>An MIT study of 30 blind and 90 sighted readers found that most blind readers wanted descriptions to "stick to straight facts about the data." The authors note that this level of content is easy to compute when software has the data, and much harder to produce from a chart image.</p>
+              <p class="src">Source: <a href="https://vis.mit.edu/pubs/vis-text-model.pdf">Accessible Visualization via Natural Language Descriptions: A Four-Level Model of Semantic Content (IEEE VIS 2021)</a> · <a href="evidence.html#blind-readers">More detail</a></p>
+            </div>
+          </details>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="compare-h">
+    <h2 id="compare-h">Three ways to describe a chart</h2>
+    <p class="section-intro">When the data already exists, the rule-based option wins on every row that matters for accessibility.</p>
+    <div class="table-scroll" role="region" aria-labelledby="compare-h" tabindex="0">
+      <table>
+        <thead>
+          <tr><th scope="col"></th><th scope="col">AI reads the chart image</th><th scope="col">AI reads the data</th><th scope="col" class="col-rules">Rules compute from the data</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Can state a wrong number</th><td><span class="no">Yes</span>, often</td><td><span class="no">Yes</span>, about 1 in 5</td><td class="col-rules"><span class="yes">No</span>, unless the data is wrong</td></tr>
+          <tr><th scope="row">Same answer every time</th><td>No</td><td>No</td><td class="col-rules"><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Each sentence checkable</th><td>Hard</td><td>Partly</td><td class="col-rules"><span class="yes">Yes</span>, against the table</td></tr>
+          <tr><th scope="row">Running cost</th><td>Per call, every view or refresh</td><td>Per call, every view or refresh</td><td class="col-rules">Near zero</td></tr>
+          <tr><th scope="row">Also needs</th><td>Hosting, monitoring, validation, abuse limits</td><td>Hosting, monitoring, validation, abuse limits</td><td class="col-rules">Tests for each rule</td></tr>
+          <tr><th scope="row">Main limit</th><td>Misreads the picture</td><td>Invents or miscounts</td><td class="col-rules">Says only what its rules cover</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="built-h">
+    <h2 id="built-h">What I built: Chart Details</h2>
+    <p class="section-intro">On the <a href="https://legislationtrends2026-fgh8dvf0a4edhqc3.northcentralus-01.azurewebsites.net/">Legislative Intelligence Platform</a>, every chart has a Chart Details panel. Nothing in it is AI-generated. It is calculated from the chart's own data.</p>
+    <div class="built">
+      <div><strong>Plain-language summary</strong><span>The main trend, highs, lows and changes, written by rules</span></div>
+      <div><strong>Accessible data table</strong><span>Screen-reader friendly, the same numbers the chart draws</span></div>
+      <div><strong>Excel download</strong><span>Anyone can check every statement against the source</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="practice-h">
+    <h2 id="practice-h">Best practice</h2>
+    <ol class="checklist">
+      <li>Start from the data, not the picture, whenever the data exists.</li>
+      <li>Generate the core description with rules: direction, highs and lows, biggest change, comparisons.</li>
+      <li>State your thresholds, for example what counts as "rising" or "roughly flat."</li>
+      <li>Always ship the data table and a download next to the chart.</li>
+      <li>Test each rule against hand-checked charts, including ties, gaps and flat lines.</li>
+      <li>If you add AI, label it, and check every number it states against the data before showing it.</li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="ai-h">
+    <h2 id="ai-h">Where AI still helps</h2>
+    <ul class="plain-list">
+      <li>Answering a reader's follow-up questions, clearly labeled as AI.</li>
+      <li>Charts that exist only as images or PDFs, with the extracted numbers checked by a person.</li>
+      <li>Suggesting context a person then reviews.</li>
+    </ul>
+    <p class="section-intro">AI may get there. Today, when you already have the data, there is no reason to make readers depend on it.</p>
+  </section>
+
+  <section class="next" aria-labelledby="next-h">
+    <h2 id="next-h">The bigger lesson</h2>
+    <p class="section-intro">Most AI errors here are errors of meaning: the model does not know what the numbers stand for. That points past charts to a larger fix: documenting what our data means so that any tool, AI or not, can use it correctly.</p>
+    <a class="cta" href="evidence.html">Read the full evidence</a>
+  </section>
+
+  <footer>
+    <p>Prepared by Tayler Erbe, Doc Intelligence Lab. Research current as of November 9, 2026. Six of the sources were read in full; the rest are marked on the evidence page.</p>
+    <p>Set in Atkinson Hyperlegible, a typeface designed by the Braille Institute for readers with low vision.</p>
+  </footer>
+</main>
+</body>
+</html>
