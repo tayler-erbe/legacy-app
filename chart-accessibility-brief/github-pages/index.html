@@ -232,7 +232,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
       <div>
         <p class="eyebrow">Tayler Erbe / Research brief · Accessible charts</p>
         <h1>If you have the data, describe the chart <em>from the data</em>.</h1>
-        <p class="hero-deck">I first built accessible chart descriptions with AI. Then I read the research. Even the best models still get chart facts wrong, including when they are handed the data, and they get worse as charts get busier.</p>
+        <p class="hero-deck">I first built accessible chart descriptions with AI. Then I read the research. Even the best models still get chart facts wrong, handing them the data only helps a little, and they get worse as charts get busier.</p>
         <p class="answer-line"><b>Short answer:</b> compute the description from the chart's data with rules. It cannot invent a number, it costs almost nothing to run, and every sentence can be checked against a downloadable table.</p>
         <div class="hero-actions">
           <a href="#findings" class="button primary">See the findings <span aria-hidden="true">↓</span></a>
@@ -251,13 +251,13 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
           </div>
         </div>
         <div class="hero-panel" id="hp-data" role="tabpanel" aria-labelledby="ht-data">
-          <h2>Handed the data.<br>Still 1 in 5 wrong.</h2>
-          <div class="hero-bars" aria-label="Share of stated numbers that matched the data: Gemini 3.5 Flash 79.7%, GPT-5.4 79.0%, Llama 4 Scout 71.3%">
+          <h2>Gave it the data.<br>Barely helped.</h2>
+          <div class="hero-bars" aria-label="Share of stated numbers that matched the data, pooled across tests with and without the data table: Gemini 3.5 Flash 79.7%, GPT-5.4 79.0%, Llama 4 Scout 71.3%">
             <div><span>Gemini 3.5 Flash</span><strong>79.7%</strong><i style="--bar:79.7%"></i></div>
             <div class="muted-bar"><span>GPT-5.4</span><strong>79.0%</strong><i style="--bar:79%"></i></div>
             <div class="muted-bar"><span>Llama 4 Scout</span><strong>71.3%</strong><i style="--bar:71.3%"></i></div>
           </div>
-          <p>Share of numbers in "directly supported" claims that matched the chart's data within 2%. 102 charts, 1,224 descriptions, data table supplied (2026).</p>
+          <p>Share of numbers in "directly supported" claims that matched the chart's data within 2%, pooled across tests with and without the data table. Adding the table raised it by only 2 to 7 points. 102 charts, 1,224 descriptions (2026).</p>
           <a class="figure-source" href="evidence.html#data-supplied">See the study <span>↗</span></a>
         </div>
         <div class="hero-panel" id="hp-captions" role="tabpanel" aria-labelledby="ht-captions" hidden>
@@ -286,7 +286,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
 
   <section class="stat-strip gutter" aria-label="Key facts">
     <div class="wrap">
-      <div><strong>1 in 5</strong><span>numbers wrong even with the data supplied</span></div>
+      <div><strong>1 in 5</strong><span>stated numbers didn't match the data; adding the table helped 2–7 points</span></div>
       <div><strong>82%</strong><span>of AI chart captions had a factual error</span></div>
       <div><strong>~6%</strong><span>AI accuracy on 9 overlaid charts, people ~86%</span></div>
       <div><strong>0</strong><span>AI-generated words in Chart Details</span></div>
@@ -303,14 +303,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
       <div class="route-grid">
         <article class="route lead-route">
           <p class="route-id">AI given the data</p>
-          <h3>About 1 in 5 numbers wrong</h3>
-          <p class="why">GPT-5.4 and Gemini had each chart's data table and still misstated numbers they called directly supported.</p>
+          <h3>The data table barely helped</h3>
+          <p class="why">About 1 in 5 numbers that GPT-5.4 and Gemini called directly supported didn't match the data. Adding the data table improved that by only a few points.</p>
           <div class="route-metrics">
-            <div><strong>79.0%</strong><span>GPT-5.4 numbers<br>matching the data</span></div>
-            <div><strong>79.7%</strong><span>Gemini 3.5 Flash</span></div>
+            <div><strong>79.0%</strong><span>GPT-5.4 numbers matching,<br>all conditions pooled</span></div>
+            <div><strong>+2 to +7</strong><span>points gained by<br>adding the table</span></div>
           </div>
           <span class="method-label">Read in full · 2026</span>
-          <p class="caution">Checks numbers only, so a matching number can still sit in a wrong sentence.</p>
+          <p class="caution">The paper doesn't publish a data-only rate, and it checks numbers only, so a matching number can still sit in a wrong sentence.</p>
           <a href="evidence.html#data-supplied">See the study ↗</a>
         </article>
         <article class="route">
@@ -432,7 +432,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
         <table class="compare">
           <thead><tr><th scope="col"></th><th scope="col">AI reads the chart image</th><th scope="col">AI reads the data</th><th scope="col" class="rules">Rules compute from the data</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Can state a wrong number</th><td><span class="flag-no">Yes</span>, often, more on busy charts</td><td><span class="flag-no">Yes</span>, about 1 in 5</td><td class="rules"><span class="flag-yes">No</span>, unless the data is wrong</td></tr>
+            <tr><th scope="row">Can state a wrong number</th><td><span class="flag-no">Yes</span>, often, more on busy charts</td><td><span class="flag-no">Yes</span>, still often</td><td class="rules"><span class="flag-yes">No</span>, unless the data is wrong</td></tr>
             <tr><th scope="row">Same answer every time</th><td>No</td><td>No</td><td class="rules"><span class="flag-yes">Yes</span></td></tr>
             <tr><th scope="row">Each sentence checkable</th><td>Hard</td><td>Partly</td><td class="rules"><span class="flag-yes">Yes</span>, against the table</td></tr>
             <tr><th scope="row">Running cost</th><td>Per call, every view or refresh</td><td>Per call, every view or refresh</td><td class="rules">Near zero</td></tr>

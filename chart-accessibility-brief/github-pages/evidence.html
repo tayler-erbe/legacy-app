@@ -122,16 +122,17 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
 
     <section class="study" id="data-supplied">
       <p class="eyebrow">01 / AI with the data supplied</p>
-      <h2>Handed the data table, top models still misstated about 1 in 5 numbers.</h2>
-      <p class="takeaway">Giving the model the data helped, but it did not make the numbers reliable.</p>
+      <h2>About 1 in 5 stated numbers didn't match the data, and adding the data table barely helped.</h2>
+      <p class="takeaway">Giving the models the data table raised number accuracy by only 2 to 7 points. It did not make the numbers reliable.</p>
       <dl class="facts">
         <dt>Study</dt><dd>Chart-Supported or Model-Supplied? Examining MLLM-Generated Claims for Accessible Visualization (arXiv, September 2026)</dd>
         <dt>Models</dt><dd>GPT-5.4, Gemini 3.5 Flash, Llama 4 Scout 17B</dd>
         <dt>Scale</dt><dd>102 charts from 4 sources, 4 input conditions, 1,224 descriptions, 4,210 numbers checked</dd>
-        <dt>Result</dt><dd>Numbers matching the data within 2%: GPT-5.4 79.0%, Gemini 79.7%, Llama 71.3%, overall 77.5%</dd>
+        <dt>Result</dt><dd>Numbers matching the data within 2%, pooled across all four conditions: GPT-5.4 79.0%, Gemini 79.7%, Llama 71.3%, overall 77.5%</dd>
+        <dt>Data effect</dt><dd>Adding the data table (image only versus image plus table) changed agreement by +4.5 points for GPT-5.4, +6.6 for Llama and +1.7 for Gemini (Gemini's change was within noise).</dd>
         <dt>Also</dt><dd>Adding the image on top of the data gave no consistent gain. 73.9% of “real-world significance” claims relied on information outside the chart.</dd>
       </dl>
-      <p class="caution"><b>Limits.</b> The check matches numbers only, so a matching number can still sit in a wrong sentence. Some mismatches may come from filtering or rounding. The models labeled their own claims.</p>
+      <p class="caution"><b>Limits.</b> The paper reports agreement pooled across conditions with and without the data table, not a data-only rate. The check matches numbers only, so a matching number can still sit in a wrong sentence. Some mismatches may come from filtering or rounding. The models labeled their own claims.</p>
       <p class="src"><a href="https://arxiv.org/abs/2607.25021">arxiv.org/abs/2607.25021</a><span class="tag">Read in full</span></p>
     </section>
 
