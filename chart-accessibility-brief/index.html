@@ -1,572 +1,573 @@
 <title>Charts Without Guesswork</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Why rule-based chart descriptions computed from the data beat AI-generated ones for accessibility. A research brief by Tayler Erbe, Document Intelligence Lab.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: Document Intelligence Lab system. Light paper page, one dark ink results band, square cards, numbered sections. Single deliberate light theme, matching the Lab site. */
-:root {
-  --ink: #142b36;
-  --paper: #f8f7f2;
-  --muted: #58666b;
-  --line: #d9ded8;
-  --lime: #c4ef62;
-  --teal: #386d68;
-  --amber: #8a4c28;
-  --white: #ffffff;
-  --panel-text: #cfddd9;
-  --panel-quiet: #b0c0c3;
-  --panel-line: #44606a;
-  --panel-track: #344d56;
-  --panel-muted: #819c9e;
-  --body: "DM Sans", Arial, sans-serif;
-  --display: "Manrope", Arial, sans-serif;
-  color-scheme: light;
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--ink:#142b36;--paper:#f8f7f2;--muted:#58666b;--line:#d9ded8;--lime:#c4ef62;--teal:#386d68;--amber:#8a4c28;--white:#fff;--body:'DM Sans',Arial,sans-serif;--display:'Manrope',Arial,sans-serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65}a{color:inherit;text-underline-offset:5px}button,select{font:inherit}button,a,select,summary{-webkit-tap-highlight-color:transparent}button,select,summary{cursor:pointer}a:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #6d940c;outline-offset:5px}.wrap{width:min(1240px,calc(100% - 96px));margin-inline:auto}.skip{position:absolute;left:20px;top:-100px;background:var(--lime);padding:12px;z-index:100}.skip:focus{top:10px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.site-header{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 48px;border-bottom:1px solid var(--line);background:rgba(248,247,242,.96);position:sticky;top:0;z-index:20;backdrop-filter:blur(15px)}.brand{display:flex;gap:13px;align-items:center;text-decoration:none;font-size:13px;line-height:1.3}.brand-mark{font:800 23px var(--display);position:relative;border:1px solid var(--ink);width:46px;height:46px;display:grid;place-items:center}.brand-mark>span{font-size:12px;position:absolute;top:0;right:2px}.site-header nav{display:flex;gap:25px;font-size:13px}.site-header nav a,.repo-link{text-decoration:none}.site-header nav a:hover,.repo-link:hover{text-decoration:underline}.repo-link{font-size:13px;font-weight:700;border-bottom:1px solid;padding-bottom:4px}.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:64px;width:min(1340px,calc(100% - 96px));margin:76px auto 72px;align-items:center}.eyebrow{font-size:11px;letter-spacing:1.7px;font-weight:700;line-height:1.5;margin:0 0 24px}h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-1.6px;line-height:1.12;margin-top:0}h1{font-size:clamp(42px,4.5vw,72px);margin-bottom:28px}h1 em{font-style:normal;color:var(--teal)}.hero-deck{font-size:17px;color:var(--muted);max-width:550px;line-height:1.8}.hero-actions{display:flex;gap:25px;align-items:center;flex-wrap:wrap;margin:32px 0 26px}.button{padding:15px 22px;display:inline-flex;gap:24px;text-decoration:none;font-size:13px;font-weight:700}.primary{background:var(--ink);color:var(--white)}.primary:hover{background:var(--teal)}.text-link{font-size:13px;font-weight:600}.meta-line{font-size:11px;letter-spacing:.3px;color:var(--muted)}.meta-line span{margin:0 10px}.hero-figure{background:var(--ink);color:var(--paper);padding:31px 34px 26px;min-height:490px;border-radius:2px;box-shadow:16px 16px 0 #e2e9de}.figure-top{display:flex;justify-content:space-between;gap:20px;font-size:9px;letter-spacing:1.2px;color:#b8c8c9;border-bottom:1px solid #44606a;padding-bottom:22px}.hero-figure h2{font-size:39px;margin:30px 0}.hero-bars>div{display:grid;grid-template-columns:1fr auto;gap:7px;margin:22px 0}.hero-bars>div>span{font-size:13px;align-self:end}.hero-bars strong{font:500 38px var(--display);color:var(--lime);letter-spacing:-1px}.hero-bars small{font-size:19px}.hero-bars i{grid-column:1/-1;display:block;height:13px;background:linear-gradient(to right,var(--lime) var(--bar),#324a54 var(--bar))}.hero-bars .muted-bar strong{color:#bacacb}.hero-bars .muted-bar i{background:linear-gradient(to right,#819c9e var(--bar),#324a54 var(--bar))}.hero-figure>p{font-size:11px;line-height:1.8;color:#c2d0d0;margin:26px 0 18px}.figure-source{display:flex;justify-content:space-between;font-size:12px;text-decoration:none;border-top:1px solid #44606a;padding-top:15px}.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--line);padding:26px max(48px,calc((100vw - 1240px)/2));gap:30px}.stat-strip>div{border-right:1px solid var(--line);padding-right:20px}.stat-strip>div:last-child{border:0}.stat-strip strong{display:block;font:500 clamp(24px,2.8vw,38px) var(--display);letter-spacing:-1px}.stat-strip span{font-size:11px;color:var(--muted);display:block;margin-top:5px}.scope-note{font-size:11px;color:var(--muted);margin-top:18px}.section{padding-block:100px}.section-head{max-width:780px;margin-bottom:45px}.section-head h2,.use-section h2,.resources h2{font-size:clamp(34px,3.6vw,52px);margin-bottom:23px}.section-head>p:last-child{max-width:670px;color:var(--muted);font-size:16px;line-height:1.9}.route-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:0;border:1px solid var(--line)}.route{padding:30px;border-right:1px solid var(--line);display:flex;flex-direction:column}.route:last-child{border:0}.lead-route{background:#edf0e7}.route-id{font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:23px}.route h3{font-size:26px;letter-spacing:-.8px;margin-bottom:18px}.route>p{font-size:14px;color:var(--muted)}.route-metrics{display:flex;gap:28px;margin:16px 0}.route-metrics strong{display:block;font:600 31px var(--display);letter-spacing:-1px}.route-metrics span{font-size:10px;line-height:1.5;display:block;margin-top:5px;color:var(--muted)}.caution{font-size:12px!important;line-height:1.7;color:var(--amber)!important}.route a{font-size:12px;font-weight:700;margin-top:auto;padding-top:25px}.method-label{font-size:10px;letter-spacing:.3px;background:#ebeee7;align-self:start;padding:6px 9px;margin:18px 0 24px}.finding-note{display:flex;align-items:center;gap:25px;padding:26px 0;border-bottom:1px solid var(--line);margin-top:25px}.note-symbol{display:grid;place-items:center;min-width:35px;height:35px;border:1px solid var(--amber);color:var(--amber);border-radius:50%;font-weight:700}.finding-note h3{font-size:18px;letter-spacing:-.4px;margin-bottom:7px}.finding-note p{font-size:13px;color:var(--muted);max-width:830px;margin:0}.finding-note>a{font-size:12px;min-width:125px}.explorer-section{background:var(--ink);color:var(--paper);padding:90px 0}.light>p:last-child{color:#c1ced0}.light .eyebrow{color:var(--lime)}.filters{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr auto;gap:16px;padding:24px 0;border-block:1px solid #4a6069}.filters label{font-size:11px;letter-spacing:.3px;color:#bbcacc;display:block}select{width:100%;background:none;color:inherit;border:1px solid #597078;padding:11px 30px 11px 12px;border-radius:0;margin-top:6px;font-size:12px;min-height:42px}select option{background:var(--paper);color:var(--ink)}.reset{align-self:end;min-height:42px;border:0;background:none;color:#cfddd9;text-decoration:underline;text-underline-offset:4px;font-size:12px}.explorer-heading{display:flex;justify-content:space-between;gap:20px;align-items:end;margin:37px 0 12px}.explorer-heading .eyebrow{font-size:10px;color:var(--lime);margin-bottom:10px}.explorer-heading h3{font-size:26px;letter-spacing:-.7px;margin:0}.download-button{background:none;color:var(--paper);border:1px solid #759183;padding:9px 13px;font-size:12px}.result-notice{font-size:12px;color:#bbcacc;max-width:950px;margin:18px 0 27px}.comparison-chart{display:grid;gap:17px;padding-bottom:32px;max-height:800px;overflow:auto}.chart-row{display:grid;grid-template-columns:245px 1fr 75px;align-items:center;gap:18px;font-size:12px}.chart-label small{display:block;font-size:10px;color:#b0c0c3}.bar-track{height:12px;background:#344d56}.bar-fill{height:100%;background:var(--lime);width:var(--width);min-width:2px}.chart-value{text-align:right;font-variant-numeric:tabular-nums;font-size:15px}.table-scroll{overflow:auto}.results-table{width:100%;border-collapse:collapse;font-size:12px;min-width:740px}.results-table th{color:#bacacd;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;padding:14px 10px;text-align:left;border-block:1px solid #52656e;white-space:nowrap}.results-table th:first-child,.results-table td:first-child{padding-left:0}.results-table td{padding:15px 10px;border-bottom:1px solid #3c525c;font-variant-numeric:tabular-nums}.results-table td small{display:block;color:#b0c0c3;font-size:10px}.results-table a{font-size:11px}.empty-state{padding:28px;border:1px dashed #7b9098;color:#d0dcd9;font-size:14px}.explorer-footer{display:flex;justify-content:space-between;gap:20px;font-size:10px;color:#bdcccc;margin-top:18px}.pipeline{display:grid;grid-template-columns:repeat(4,1fr);list-style:none;padding:0;margin:0 0 55px;border-block:1px solid var(--line)}.pipeline li{padding:28px 25px 28px 0;margin-right:25px;border-right:1px solid var(--line)}.pipeline li:last-child{border:0}.pipeline li>span{font:500 14px var(--display);color:var(--teal);margin-bottom:20px;display:block}.pipeline h3{font-size:18px;letter-spacing:-.4px}.pipeline p{font-size:12px;color:var(--muted)}.methods-layout{display:grid;grid-template-columns:.8fr 1.2fr;gap:80px}.methods-layout h3{font-size:26px;letter-spacing:-.6px}.methods-layout>div>p{font-size:14px;color:var(--muted);line-height:1.9}details{border-top:1px solid var(--line);padding:18px 0}details:last-child{border-bottom:1px solid var(--line)}summary{font-weight:600;font-size:14px;list-style:none;padding-right:25px;position:relative}summary:after{content:'+';position:absolute;right:0;font-size:20px;font-weight:400;top:-4px}details[open]>summary:after{content:'−'}details p{font-size:13px;color:var(--muted);line-height:1.9;margin-top:17px}details summary::-webkit-details-marker{display:none}.confirmation-band{background:#e7eddd;margin-top:55px;padding:35px 40px;display:grid;grid-template-columns:1.2fr 1fr;gap:50px}.confirmation-band .eyebrow{font-size:10px;margin-bottom:18px}.confirmation-band h3{font-size:26px;letter-spacing:-.6px}.confirmation-band p{font-size:12px;color:var(--muted)}.effect-list{display:flex;flex-direction:column;justify-content:center}.effect-list p{margin:0;display:flex;gap:24px;align-items:center;padding:12px 0;border-bottom:1px solid #c9d4bc}.effect-list strong{font:600 25px var(--display);color:var(--ink);min-width:120px}.effect-list span{font-size:11px}.hardware-section{background:#e7ede8;padding:85px 0}.hardware-layout{display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:center}.hardware-layout .section-head{margin:0}.hardware-picker{display:block;font-size:12px;font-weight:600;margin-top:30px;max-width:400px}.hardware-picker select{border-color:#8b9c96;font-weight:400}.hardware-detail{background:var(--paper);padding:35px 40px;border-top:3px solid var(--teal)}.hardware-detail .eyebrow{color:var(--teal);font-size:10px}.hardware-detail h3{font-size:28px;letter-spacing:-.7px}.hardware-detail h4{font-size:12px;margin-bottom:7px}.hardware-detail p,.hardware-detail li{font-size:13px;color:var(--muted)}.hardware-detail ul{padding-left:18px}.hardware-detail .tier-status{display:inline-block;background:#e3eadd;font-size:10px;padding:4px 9px;margin-bottom:22px}.evidence-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px}.before-after{display:flex;gap:30px;align-items:center;border-block:1px solid var(--line);padding:23px 0 20px;margin-bottom:22px}.before-after strong{font:500 68px var(--display);display:block;line-height:1.2;letter-spacing:-3px}.before-after>div>span{font-size:11px;color:var(--muted)}.arrow{font-size:35px;color:var(--teal)}.evidence-layout p{font-size:14px;color:var(--muted)}.field-table{border-collapse:collapse;width:100%;font-size:13px}.field-table caption{text-align:left;font-size:12px;font-weight:600;padding-bottom:16px}.field-table th,.field-table td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left}.field-table th{font-size:10px;text-transform:uppercase;color:var(--muted)}.field-table td:last-child{font-weight:700;color:var(--teal)}.field-table tr.regression td:last-child{color:var(--amber)}.legal-detail{margin-top:35px}.use-section{background:#e9e6dc;padding:75px 0}.use-layout{display:grid;grid-template-columns:.8fr 1.2fr;gap:90px}.use-layout h2{margin:0}.use-layout .large-copy{font-size:24px;line-height:1.5;color:var(--ink);margin-top:0}.use-layout p{font-size:14px;color:var(--muted)}.use-tags{display:flex;flex-wrap:wrap;gap:10px;margin:25px 0}.use-tags span{font-size:11px;border-bottom:1px solid #a8b2a4;padding-bottom:5px;margin-right:10px}.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}.roadmap article{border-top:2px solid var(--teal);padding-top:23px}.roadmap article>span{font-size:10px;letter-spacing:1px;color:var(--teal)}.roadmap h3{font-size:23px;letter-spacing:-.6px;margin-top:23px}.roadmap p{font-size:13px;color:var(--muted)}.roadmap small{font-size:10px;display:block;margin-top:20px}.next-footer{display:flex;justify-content:space-between;gap:50px;border-block:1px solid var(--line);margin-top:45px;padding:24px 0;align-items:center}.next-footer p{font-size:12px;max-width:800px;margin:0;color:var(--muted)}.next-footer a{min-width:225px}.resources{display:grid;grid-template-columns:1fr 1fr;gap:90px;padding:30px 0 90px}.resource-links a{display:flex;justify-content:space-between;gap:25px;padding:16px 0;border-top:1px solid var(--line);text-decoration:none;font-size:13px}.resource-links a:last-child{border-bottom:1px solid var(--line)}.resource-links a:hover{color:var(--teal)}footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:30px;padding-block:30px 40px;font-size:11px;color:var(--muted)}footer strong{color:var(--ink);font-size:13px}footer p{margin:5px 0}footer a{align-self:center}
+.hero>*,.route-grid>*,.methods-layout>*,.hardware-layout>*,.evidence-layout>*,.use-layout>*,.resources>*,.filters>*,.stat-strip>*,.roadmap>*{min-width:0}.table-scroll{min-width:0;max-width:100%}.eyebrow{overflow-wrap:anywhere}select{min-width:0}.brand,.repo-link{flex-shrink:1}
+@media(min-width:1600px){.hero{gap:100px}.hero-figure{min-height:520px;padding:35px 40px}}
+@media(max-width:1100px){.site-header{padding:18px 28px;gap:15px}.site-header nav{gap:15px;font-size:11px}.repo-link{font-size:11px}.hero{gap:35px;width:calc(100% - 64px)}.wrap{width:calc(100% - 64px)}.hero-figure{padding:25px;min-height:450px}.hero-figure h2{font-size:33px}.figure-top{font-size:8px}.route{padding:24px}.route-grid{grid-template-columns:1.15fr 1fr 1fr}.methods-layout,.hardware-layout,.evidence-layout{gap:45px}.stat-strip{padding:25px 32px}.chart-row{grid-template-columns:220px 1fr 70px}.filters{gap:10px}.pipeline li{margin-right:15px;padding-right:15px}}
+@media(max-width:800px){.site-header nav{display:none}.site-header{padding:15px 22px}.brand{font-size:11px}.brand-mark{width:38px;height:38px;font-size:19px}.wrap,.hero{width:calc(100% - 44px)}.hero{grid-template-columns:1fr;margin:45px auto 55px;gap:35px}.hero h1{font-size:clamp(41px,7.6vw,62px)}.hero-figure{min-height:0;padding:25px 28px;max-width:600px}.hero-figure h2{font-size:30px}.hero-bars{display:grid;grid-template-columns:1fr 1fr;gap:30px}.hero-figure>p{margin-top:12px}.hero-deck{font-size:15px}.hero-actions{gap:20px}.stat-strip{grid-template-columns:1fr 1fr;padding:24px 22px;gap:22px}.stat-strip>div:nth-child(2){border:0}.stat-strip strong{font-size:30px}.scope-note{font-size:10px}.section{padding-block:65px}.section-head h2,.use-section h2,.resources h2{font-size:36px}.section-head>p:last-child{font-size:14px}.route-grid{grid-template-columns:1fr 1fr}.lead-route{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--line)}.route:nth-child(2){border-right:1px solid var(--line)}.route-metrics{margin:8px 0}.route h3{font-size:25px}.finding-note{align-items:start;flex-wrap:wrap;gap:15px}.finding-note>div{flex:1}.finding-note>a{margin-left:50px}.explorer-section{padding-block:65px}.filters{grid-template-columns:1fr 1fr;gap:15px}.reset{justify-self:start}.explorer-heading{align-items:center}.download-button{font-size:10px}.explorer-heading h3{font-size:24px}.comparison-chart{max-height:650px}.chart-row{grid-template-columns:180px 1fr 65px;gap:12px}.chart-label{font-size:11px}.chart-value{font-size:13px}.explorer-footer{flex-direction:column;gap:0}.pipeline{grid-template-columns:1fr 1fr}.pipeline li:nth-child(2){border:0}.pipeline li{margin:0;padding:24px 20px}.pipeline li:nth-child(-n+2){border-bottom:1px solid var(--line)}.methods-layout,.hardware-layout,.evidence-layout,.use-layout,.resources{grid-template-columns:1fr;gap:35px}.confirmation-band{padding:28px;grid-template-columns:1fr;gap:15px}.confirmation-band h3{font-size:25px}.hardware-section{padding-block:60px}.hardware-detail{padding:30px}.hardware-picker{max-width:none}.evidence-layout{gap:25px}.before-after{justify-content:space-between;max-width:420px}.roadmap{grid-template-columns:1fr 1fr;row-gap:35px}.next-footer{flex-direction:column;align-items:start;gap:20px}.resources{padding:0 0 60px}.resources h2{margin-bottom:0}footer{flex-wrap:wrap}.use-section{padding-block:55px}}
+@media(max-width:450px){.hero h1{font-size:40px;letter-spacing:-1.8px}.hero-figure{padding:22px}.figure-top{font-size:7px;letter-spacing:.8px}.hero-bars strong{font-size:32px}.hero-bars{gap:15px}.hero .eyebrow{font-size:9px}.hero-actions{flex-direction:column;align-items:start}.section-head h2,.use-section h2,.resources h2{font-size:32px}.route-grid{grid-template-columns:1fr}.route,.route:nth-child(2){border:0;border-bottom:1px solid var(--line)}.route:last-child{border:0}.chart-row{grid-template-columns:140px 1fr 56px;gap:8px}.chart-label{font-size:10px}.chart-label small{font-size:9px}.chart-value{font-size:12px}.roadmap{grid-template-columns:1fr}.hardware-detail h3{font-size:25px}.repo-link{font-size:10px}.hero-deck{font-size:14px}.effect-list strong{min-width:100px;font-size:22px}.effect-list p{gap:12px}.eyebrow{font-size:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.site-header{position:static}.site-header nav,.hero-actions,.filters,.reset,.download-button{display:none}.hero,.wrap{width:100%}.hero{margin:20px 0;gap:25px}.section{padding-block:25px}.explorer-section{background:#fff;color:#142b36;padding:25px 0}.light>p:last-child,.result-notice,.explorer-footer{color:#344d56}.comparison-chart{max-height:none}.table-scroll{overflow:visible}.results-table{min-width:0;font-size:9px}.results-table td,.results-table th{color:#142b36;border-color:#cdd5ce}.results-table td small{color:#344d56}.hardware-section,.use-section{padding:25px 0}.route-grid,.pipeline,.roadmap{break-inside:avoid}.hero-figure{box-shadow:none}.resource-links{font-size:10px}.site-header{padding:15px 0}.stat-strip{padding:15px 0}}
+
+/* Additions to styles.css (the original design system). Same tokens, fonts and spacing. */
+.hero-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.hero-tabs button{background:none;border:1px solid #44606a;color:#b8c8c9;font-size:9px;letter-spacing:1.2px;padding:6px 9px;text-transform:uppercase}
+.hero-tabs button[aria-selected="true"]{background:var(--lime);color:var(--ink);border-color:var(--lime);font-weight:700}
+.hero-panel[hidden]{display:none}
+.hero-figure .figure-top>span:first-child{align-self:center}
+.answer-line{border-left:3px solid var(--teal);padding:4px 0 4px 18px;font-size:15px;color:var(--ink);max-width:560px;margin:0 0 6px}
+.author-line{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin-top:22px}
+.author-line b{color:var(--ink)}
+.stat-strip a{text-decoration:none}
+/* six route cards */
+.route-grid.six{grid-template-columns:repeat(3,1fr)}
+.route-grid.six .route{border-bottom:1px solid var(--line)}
+.route-grid.six .route:nth-child(3n){border-right:0}
+.route-grid.six .route:nth-last-child(-n+3){border-bottom:0}
+.route-grid.six .route:last-child{border-right:0}
+.route .why{color:var(--ink)!important;font-size:15px!important}
+.route dl{font-size:13px;margin:8px 0 0}
+.route dt{font-weight:700;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--teal);margin-top:10px}
+.route dd{margin:2px 0 0;color:var(--muted)}
+/* hardware picker */
+.tier-picker{display:grid;gap:8px;margin-top:28px}
+.tier-picker button{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;text-align:left;background:rgba(255,255,255,.55);border:1px solid #c7d3cb;padding:13px 16px;font-size:13px;color:var(--ink)}
+.tier-picker button small{display:block;font-size:10px;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.tier-picker button b{font:600 15px var(--display);white-space:nowrap}
+.tier-picker button[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tier-picker button[aria-selected="true"] small{color:#b8c8c9}
+.hardware-detail .price{font:600 clamp(30px,3.2vw,44px) var(--display);letter-spacing:-1.4px;margin:4px 0 2px}
+.hardware-detail .mem{font-size:13px;color:var(--muted);margin-bottom:18px}
+.hardware-detail .measured{display:inline-block;font-size:10px;padding:4px 9px;margin:0 6px 14px 0;background:#e3eadd}
+.hardware-detail .measured.est{background:#f3e7dc;color:var(--amber)}
+.hardware-detail .basis{font-size:11px!important;border-top:1px solid var(--line);padding-top:12px;margin-top:18px}
+.choose-note{margin-top:45px;display:grid;grid-template-columns:.8fr 1.2fr;gap:60px;border-top:1px solid #c7d3cb;padding-top:30px}
+.choose-note h3{font-size:26px;letter-spacing:-.6px}
+.choose-note p{font-size:14px;color:var(--muted)}
+/* headline results band */
+.results-band{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line)}
+.results-band>article{padding:30px;border-right:1px solid var(--line)}
+.results-band>article:last-child{border:0}
+.results-band h3{font-size:21px;letter-spacing:-.5px}
+.results-band p{font-size:13px;color:var(--muted)}
+.mini-bars{display:grid;gap:12px;margin:18px 0}
+.mini-bars>div{display:grid;grid-template-columns:1fr auto;gap:5px;font-size:12px}
+.mini-bars i{grid-column:1/-1;display:block;height:10px;background:linear-gradient(to right,var(--teal) var(--bar),#e4e8e1 var(--bar));position:relative}
+.mini-bars i.muted{background:linear-gradient(to right,#9fb0ab var(--bar),#e4e8e1 var(--bar))}
+.mini-bars strong{font:600 16px var(--display)}
+.mini-bars .base{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--amber)}
+/* method steps + rounds stepper */
+.steps6{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-block:1px solid var(--line);list-style:none;padding:0;margin:0 0 60px;counter-reset:s}
+.steps6 li{padding:28px 25px 28px 0;margin-right:25px;border-right:1px solid var(--line);counter-increment:s}
+.steps6 li:nth-child(3n){border-right:0}
+.steps6 li:nth-child(-n+3){border-bottom:1px solid var(--line)}
+.steps6 li::before{content:"0" counter(s);font:500 14px var(--display);color:var(--teal);display:block;margin-bottom:14px}
+.steps6 h3{font-size:19px;letter-spacing:-.4px;margin-bottom:8px}
+.steps6 p{font-size:13px;color:var(--muted);margin:0}
+.rounds{display:grid;grid-template-columns:260px 1fr;gap:40px;margin-top:10px}
+.round-tabs{display:flex;flex-direction:column;border-left:1px solid var(--line)}
+.round-tabs button{text-align:left;background:none;border:0;border-left:3px solid transparent;margin-left:-2px;padding:12px 18px;font-size:14px;color:var(--muted)}
+.round-tabs button small{display:block;font-size:10px;letter-spacing:.8px;text-transform:uppercase}
+.round-tabs button[aria-selected="true"]{border-left-color:var(--teal);color:var(--ink);font-weight:700}
+.round-panel{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--line);background:#fff}
+.round-panel[hidden]{display:none}
+.round-panel>div{padding:24px 26px;border-bottom:1px solid var(--line)}
+.round-panel>div:nth-child(odd){border-right:1px solid var(--line)}
+.round-panel>div:nth-last-child(-n+2){border-bottom:0}
+.round-panel b{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.round-panel p{font-size:14px;margin:0}
+.stop-note{font-size:13px;color:var(--muted);margin-top:22px;max-width:820px}
+/* service steps on the beige band */
+.service{display:grid;grid-template-columns:repeat(6,1fr);gap:0;list-style:none;padding:0;margin:35px 0;border-block:1px solid #cfcab9}
+.service li{padding:22px 16px 22px 0;margin-right:16px;border-right:1px solid #cfcab9;font-size:12px;color:var(--muted)}
+.service li:last-child{border:0}
+.service b{display:block;font:600 16px var(--display);color:var(--ink);margin-bottom:6px}
+/* explorer additions */
+.filters.dyn{grid-template-columns:1.2fr 1fr 1.2fr 1fr auto}
+.static-choice{margin-top:6px;min-height:42px;border:1px dashed #597078;padding:11px 12px;font-size:12px;color:#e3ebe8}
+.machine-note{font-size:11px;color:#bbcacc;margin:10px 0 0}
+.glance-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#3c525c;border:1px solid #3c525c;margin:22px 0 28px}
+.glance-row>div{background:#1b3540;padding:14px 16px;font-size:12px;color:#dce6e3}
+.glance-row b{display:block;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--lime);margin-bottom:6px}
+.glance-row .rec{background:#24434d}
+.chart-row.rec .chart-label{color:var(--lime)}
+.bar-fill.alt{background:#8fa7a6}
+.bar-track{position:relative}
+.base-mark{position:absolute;top:-5px;bottom:-5px;border-left:2px dashed #f0b48c}
+.results-table tr.rec td{background:#1d3a44}
+.results-table .tag{display:inline-block;font-size:9px;letter-spacing:.8px;text-transform:uppercase;background:var(--lime);color:var(--ink);padding:2px 6px;margin-top:4px;font-weight:700}
+.meaning{border-left:3px solid var(--lime);padding:6px 0 6px 20px;margin:26px 0 14px;max-width:900px}
+.meaning h4{font:600 15px var(--display);margin:0 0 6px;color:var(--lime);letter-spacing:.2px}
+.meaning p{font-size:14px;color:#e3ebe8;margin:0}
+.limits{font-size:12px;color:#bbcacc;max-width:900px}
+.limits a{color:#e3ebe8}
+.stage-pill{display:inline-block;font-size:10px;letter-spacing:.6px;padding:4px 9px;border:1px solid #759183;margin-right:8px;color:#dce6e3}
+.stage-pill.conf{background:var(--lime);color:var(--ink);border-color:var(--lime);font-weight:700}
+.question{font:500 19px var(--display);letter-spacing:-.3px;color:var(--paper);margin:14px 0 4px;max-width:900px}
+/* examples, contract, glossary */
+.example-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line)}
+.example-grid>article{padding:26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.example-grid>article:nth-child(3n){border-right:0}
+.example-grid>article:nth-last-child(-n+3){border-bottom:0}
+.example-grid h3{font-size:18px;letter-spacing:-.4px;color:var(--ink)}
+.ill{font-size:9px;letter-spacing:1.3px;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:12px;display:block}
+.example-grid pre{background:#eef0e9;padding:12px;font-size:11px;white-space:pre-wrap;line-height:1.5;color:var(--ink)}
+.mini-table{border-collapse:collapse;font-size:11px;margin:10px 0;width:100%}
+.mini-table td,.mini-table th{border:1px solid var(--line);padding:4px 7px;text-align:left;color:var(--ink)}
+.contract-band{background:var(--ink);color:var(--paper);padding:34px 38px;margin-top:40px}
+.contract-band .eyebrow{color:var(--lime);font-size:10px}
+.contract-band h3{font-size:26px;letter-spacing:-.6px}
+.contract-band .chart-row{font-size:12px}
+.contract-band .legend{display:flex;gap:20px;flex-wrap:wrap;font-size:11px;color:#bbcacc;margin:6px 0 18px}
+.contract-band .legend i{display:inline-block;width:12px;height:10px;margin-right:6px;vertical-align:-1px}
+.verdict{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);margin-top:30px}
+.verdict>div{padding:22px;border-right:1px solid var(--line);font-size:13px;color:var(--muted)}
+.verdict>div:last-child{border:0}
+.verdict b{display:block;font:600 16px var(--display);color:var(--ink);margin-bottom:6px}
+.glossary{display:grid;grid-template-columns:1fr 1fr;gap:0 50px}
+.vote-table{width:100%;border-collapse:collapse;font-size:13px;margin:18px 0}
+.vote-table th{font-size:10px;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.vote-table td{padding:10px;border-bottom:1px solid var(--line)}
+.vote-table td.num,.vote-table th.num{text-align:right}
+.fit-table{width:100%;border-collapse:collapse;font-size:13px}
+.fit-table th{font-size:10px;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid #b9c7bd}
+.fit-table td{padding:11px 10px;border-bottom:1px solid #c9d5cc}
+.yes{color:var(--teal);font-weight:700}.tight{color:var(--amber);font-weight:700}
+/* reports */
+.report-wrap{width:min(900px,calc(100% - 48px));margin:60px auto 90px}
+.report-wrap h1{font-size:clamp(34px,4vw,52px)}
+.report-wrap h2{font-size:30px;margin-top:50px;letter-spacing:-.8px}
+.report-wrap h3{font-size:22px;margin-top:34px;letter-spacing:-.5px}
+.report-wrap p,.report-wrap li{font-size:15px;color:#2c4049}
+.report-wrap table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0}
+.report-wrap th{font-size:10px;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px;border-bottom:1px solid var(--ink)}
+.report-wrap td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.report-status{background:#e7eddd;padding:12px 16px;font-size:13px}
+.report-actions{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin:22px 0 10px}
+.report-wrap pre{background:#eef0e9;padding:14px;overflow:auto;font-size:12px}
+code{font-size:.9em;background:#eef0e9;padding:1px 4px}
+@media(max-width:1100px){.route-grid.six{grid-template-columns:1fr 1fr}.route-grid.six .route{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important}.route-grid.six .route:nth-child(2n){border-right:0!important}.results-band{grid-template-columns:1fr}.results-band>article{border-right:0;border-bottom:1px solid var(--line)}.service{grid-template-columns:repeat(3,1fr)}.example-grid{grid-template-columns:1fr 1fr}.example-grid>article{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important}.verdict{grid-template-columns:1fr 1fr}.filters.dyn{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.route-grid.six,.steps6,.rounds,.round-panel,.example-grid,.glossary,.choose-note,.verdict{grid-template-columns:1fr}.route-grid.six .route{border-right:0!important}.steps6 li{border-right:0;border-bottom:1px solid var(--line);margin:0}.round-tabs{flex-direction:row;flex-wrap:wrap;border-left:0;border-bottom:1px solid var(--line)}.round-tabs button{border-left:0;border-bottom:3px solid transparent;margin:0}.round-tabs button[aria-selected="true"]{border-bottom-color:var(--teal)}.round-panel>div{border-right:0!important;border-bottom:1px solid var(--line)!important}.service{grid-template-columns:1fr 1fr}.glance-row{grid-template-columns:1fr 1fr}.contract-band{padding:26px}.verdict>div{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:450px){.glance-row,.service,.filters.dyn{grid-template-columns:1fr}}
+@media print{@page{size:Letter;margin:15mm 14mm 18mm;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-size:9pt;color:#666}}
+.site-header{position:static}.hero-tabs,.tier-picker,.round-tabs,.no-print,.repo-link{display:none}.hero-panel[hidden],.round-panel[hidden]{display:grid!important}.hero-panel[hidden]{display:block!important}
+.hero{grid-template-columns:1fr}.hero-figure{min-height:0}.hardware-detail{break-inside:avoid}.round-panel{margin-bottom:10px;break-inside:avoid}
+.route,.results-band article,.steps6 li,.example-grid article{break-inside:avoid}.report-wrap{margin:0;width:100%}}
+.fig-list{list-style:none;padding:0;margin:26px 0 0}
+.fig-list li{display:grid;grid-template-columns:90px 1fr;align-items:baseline;gap:14px;padding:12px 0;border-bottom:1px solid #44606a}
+.fig-list strong{font:500 38px var(--display);color:var(--lime);letter-spacing:-1px}
+.fig-list span{font-size:13px;color:#c2d0d0}
+.print-tiers{display:none}
+@media print{.print-tiers{display:block;margin-top:20px}}
+.hardware-detail .price{color:var(--ink)!important}.hardware-detail .mem{color:var(--muted)}
+.results-table td .tag{display:table;margin-top:6px}
+.head-visual{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;margin-bottom:45px}
+.head-visual .section-head{margin-bottom:0}
+.visual{margin:0}.visual img{display:block;width:100%;height:auto;box-shadow:16px 16px 0 #e2e9de}
+.visual.on-dark img{box-shadow:none;border:1px solid #2c4651}
+.choose-note .visual{margin-top:28px;max-width:440px}.choose-note .visual img{box-shadow:12px 12px 0 #d3ddd6}
+.use-layout .visual{margin-top:30px}.use-layout .visual img{box-shadow:16px 16px 0 #d8d3c4}
+@media(max-width:800px){.head-visual{grid-template-columns:1fr;gap:30px}.visual img{box-shadow:8px 8px 0 #e2e9de}}
+@media print{.visual{max-width:60%;break-inside:avoid}.visual img{box-shadow:none}}
+
+/* Additions for the accessible-charts brief. Built on styles.css and site.css from the Document Intelligence Lab; same tokens, fonts and spacing. */
+.site-header{top:env(safe-area-inset-top,0px)}
+
+/* Results: full-width cards in the results-band frame */
+.results-band.one{grid-template-columns:1fr}
+.results-band.one>article{border-right:0;border-bottom:1px solid var(--line)}
+.results-band.one>article:last-child{border-bottom:0}
+.results-band.one h3{font-size:24px;margin-bottom:8px}
+.chart-legend{display:flex;gap:22px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:14px 0 6px}
+.chart-legend i{display:inline-block;width:12px;height:10px;margin-right:7px;vertical-align:-1px}
+.chart-legend i.dot{width:10px;height:10px;border-radius:50%}
+.chart-legend i.dash{width:0;height:12px;border-left:2px dashed var(--amber);margin-right:9px}
+.group-label{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin:16px 0 2px}
+.mini-bars.wide>div{grid-template-columns:minmax(0,1fr) auto}
+.mini-bars>div.human span{font-weight:700;color:var(--ink)}
+.mini-bars>div.human i{background:linear-gradient(to right,var(--amber) var(--bar),#e4e8e1 var(--bar))}
+.svg-chart{min-width:0;margin:10px 0}
+.svg-chart svg{display:block;max-width:100%;height:auto}
+.pair-charts{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin:10px 0}
+.pair-charts h4{font:600 15px var(--display);letter-spacing:-.3px;margin:0 0 6px}
+.chart-note{font-size:12px!important;color:var(--muted)}
+
+/* Compare table on the beige band */
+.compare-wrap{overflow-x:auto;margin-top:30px}
+.compare{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.compare th,.compare td{text-align:left;padding:14px 12px;border-bottom:1px solid #cfcab9;vertical-align:top}
+.compare thead th{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.compare tbody th{font:600 14px var(--display);letter-spacing:-.2px}
+.compare th:first-child,.compare td:first-child{padding-left:0}
+.compare .rules{background:rgba(196,239,98,.28)}
+.compare .no{color:var(--amber);font-weight:700}
+.compare .yes{color:var(--teal);font-weight:700}
+
+/* Evidence page */
+.study{border-top:1px solid var(--line);padding-block:56px;display:grid;gap:20px;scroll-margin-top:110px}
+.study h2{font-size:clamp(26px,2.6vw,36px);letter-spacing:-1px;margin:0;max-width:900px}
+.study .takeaway{border-left:3px solid var(--teal);padding:4px 0 4px 18px;font-size:16px;max-width:760px;margin:0}
+.facts{display:grid;grid-template-columns:150px minmax(0,1fr);border:1px solid var(--line);background:var(--white);margin:0}
+.facts dt,.facts dd{padding:13px 16px;border-bottom:1px solid var(--line);margin:0;font-size:14px}
+.facts dt{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700;padding-top:16px}
+.facts dt:last-of-type,.facts dd:last-of-type{border-bottom:0}
+.study .caution{max-width:820px;margin:0}
+.study-src{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin:0}
+.study-src .method-label{margin:0}
+.study-src .method-label.check{background:#f3e7dc;color:var(--amber)}
+.study ul{max-width:820px;margin:0;padding-left:20px;font-size:15px}
+.study li{margin:6px 0}
+.formula{font:600 18px var(--display);background:var(--white);border:1px solid var(--line);padding:16px 18px;overflow-x:auto;margin:0}
+.light-table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px;background:var(--white)}
+.light-table th,.light-table td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
+.light-table thead th{font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
+.light-table td.n,.light-table th.n{text-align:right;font-variant-numeric:tabular-nums}
+.light-table tr.group td{background:#edf0e7;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.light-table tr.best td{font-weight:700}
+.light-table tr.human td{background:var(--ink);color:var(--paper);font-weight:700}
+.light-table tr:last-child td{border-bottom:0}
+.table-frame{overflow-x:auto;border:1px solid var(--line)}
+.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
+.toc-grid a{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-decoration:none;font-size:13px;display:grid;gap:3px}
+.toc-grid a span{font-size:10px;letter-spacing:1.4px;color:var(--teal)}
+.toc-grid a:hover{background:#edf0e7}
+.toc-grid a:nth-child(3n){border-right:0}
+.toc-grid a:nth-last-child(-n+3){border-bottom:0}
+
+@media(max-width:800px){
+  .pair-charts{grid-template-columns:1fr}
+  .facts{grid-template-columns:1fr}
+  .facts dt{border-bottom:0;padding-bottom:0}
+  .toc-grid{grid-template-columns:1fr 1fr}
+  .toc-grid a:nth-child(3n){border-right:1px solid var(--line)}
+  .toc-grid a:nth-child(2n){border-right:0}
+  .toc-grid a:nth-last-child(-n+3){border-bottom:1px solid var(--line)}
+  .toc-grid a:last-child{border-bottom:0}
 }
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 110px; }
-body {
-  background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.65;
-}
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--paper); }
-a { color: inherit; text-underline-offset: 5px; }
-button { font: inherit; cursor: pointer; }
-a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid #6d940c; outline-offset: 5px; }
-.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.wrap { width: min(1240px, 100%); margin-inline: auto; }
-h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -1.4px; line-height: 1.12; margin: 0; text-wrap: balance; }
-p { margin: 0; }
-.eyebrow { font-size: 11px; letter-spacing: 1.7px; font-weight: 700; line-height: 1.5; margin: 0 0 20px; text-transform: uppercase; }
 
-/* Header */
-.site-header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(248, 247, 242, 0.96); backdrop-filter: blur(15px); border-bottom: 1px solid var(--line); }
-.site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 18px; }
-.brand { display: flex; gap: 13px; align-items: center; text-decoration: none; font-size: 13px; line-height: 1.3; }
-.brand-mark { font: 800 23px var(--display); position: relative; border: 1px solid var(--ink); width: 46px; height: 46px; display: grid; place-items: center; }
-.brand-mark > span { font-size: 12px; position: absolute; top: 0; right: 2px; }
-.site-header nav { display: flex; gap: 25px; font-size: 13px; flex-wrap: wrap; }
-.site-header nav a, .repo-link { text-decoration: none; }
-.site-header nav a:hover, .repo-link:hover { text-decoration: underline; }
-.repo-link { font-size: 13px; font-weight: 700; border-bottom: 1px solid; padding-bottom: 4px; white-space: nowrap; }
-
-/* Hero */
-.hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 64px; align-items: center; padding-block: 72px 64px; }
-.hero h1 { font-size: clamp(38px, 4.4vw, 66px); margin-bottom: 26px; }
-.hero h1 em { font-style: normal; color: var(--teal); }
-.hero-deck { font-size: 17px; color: var(--muted); max-width: 560px; line-height: 1.8; }
-.answer-line { border-left: 3px solid var(--teal); padding: 4px 0 4px 18px; font-size: 15px; max-width: 560px; margin: 26px 0 0; }
-.hero-actions { display: flex; gap: 25px; align-items: center; flex-wrap: wrap; margin: 30px 0 22px; }
-.button { padding: 15px 22px; display: inline-flex; gap: 24px; text-decoration: none; font-size: 13px; font-weight: 700; }
-.primary { background: var(--ink); color: var(--white); }
-.primary:hover { background: var(--teal); }
-.text-link { font-size: 13px; font-weight: 600; }
-.author-line { font-size: 12px; color: var(--muted); }
-.author-line b { color: var(--ink); }
-.hero-figure { background: var(--ink); color: var(--paper); padding: 31px 34px 26px; border-radius: 2px; box-shadow: 16px 16px 0 #e2e9de; min-width: 0; }
-.figure-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 9px; letter-spacing: 1.2px; color: #b8c8c9; border-bottom: 1px solid var(--panel-line); padding-bottom: 20px; }
-.hero-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-.hero-tabs button { background: none; border: 1px solid var(--panel-line); color: #b8c8c9; font-size: 9px; letter-spacing: 1.2px; padding: 6px 9px; text-transform: uppercase; }
-.hero-tabs button[aria-selected="true"] { background: var(--lime); color: var(--ink); border-color: var(--lime); font-weight: 700; }
-.hero-panel h2 { font-size: clamp(28px, 2.8vw, 38px); margin: 28px 0 8px; color: var(--paper); }
-.hero-bars > div { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin: 20px 0; }
-.hero-bars > div > span { font-size: 13px; align-self: end; }
-.hero-bars strong { font: 500 34px var(--display); color: var(--lime); letter-spacing: -1px; }
-.hero-bars i { grid-column: 1 / -1; display: block; height: 13px; background: linear-gradient(to right, var(--lime) var(--bar), #324a54 var(--bar)); }
-.hero-bars .muted-bar strong { color: #bacacb; }
-.hero-bars .muted-bar i { background: linear-gradient(to right, var(--panel-muted) var(--bar), #324a54 var(--bar)); }
-.hero-panel > p { font-size: 12px; line-height: 1.8; color: #c2d0d0; margin: 22px 0 16px; }
-.figure-source { display: flex; justify-content: space-between; font-size: 12px; text-decoration: none; border-top: 1px solid var(--panel-line); padding-top: 15px; }
-
-/* Stat strip */
-.stat-strip { border-block: 1px solid var(--line); }
-.stat-strip .wrap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px; padding-block: 26px; }
-.stat-strip .wrap > div { border-right: 1px solid var(--line); padding-right: 20px; }
-.stat-strip .wrap > div:last-child { border: 0; }
-.stat-strip strong { display: block; font: 500 clamp(26px, 2.8vw, 38px) var(--display); letter-spacing: -1px; }
-.stat-strip span { font-size: 12px; color: var(--muted); display: block; margin-top: 5px; }
-
-/* Sections */
-.section { padding-block: 96px; }
-.section-head { max-width: 780px; margin-bottom: 44px; }
-.section-head h2 { font-size: clamp(32px, 3.6vw, 50px); margin-bottom: 22px; }
-.section-head > p:last-child { max-width: 670px; color: var(--muted); line-height: 1.9; }
-
-/* Finding cards */
-.route-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); }
-.route { padding: 30px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
-.route:nth-child(3n) { border-right: 0; }
-.route:nth-last-child(-n+3) { border-bottom: 0; }
-.lead-route { background: #edf0e7; }
-.route-id { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 20px; text-transform: uppercase; }
-.route h3 { font-size: 24px; letter-spacing: -0.8px; margin-bottom: 14px; }
-.route .why { font-size: 15px; }
-.route-metrics { display: flex; gap: 28px; margin: 18px 0; flex-wrap: wrap; }
-.route-metrics strong { display: block; font: 600 31px var(--display); letter-spacing: -1px; }
-.route-metrics span { font-size: 11px; line-height: 1.5; display: block; margin-top: 5px; color: var(--muted); }
-.method-label { font-size: 10px; letter-spacing: 0.3px; background: #ebeee7; align-self: start; padding: 6px 9px; margin: 4px 0 18px; }
-.caution { font-size: 12px; line-height: 1.7; color: var(--amber); }
-.route a { font-size: 12px; font-weight: 700; margin-top: auto; padding-top: 22px; }
-.finding-note { display: flex; align-items: center; gap: 25px; padding: 26px 0; border-bottom: 1px solid var(--line); margin-top: 25px; }
-.note-symbol { display: grid; place-items: center; min-width: 35px; height: 35px; border: 1px solid var(--amber); color: var(--amber); border-radius: 50%; font-weight: 700; }
-.finding-note h3 { font-size: 18px; letter-spacing: -0.4px; margin-bottom: 6px; }
-.finding-note p { font-size: 14px; color: var(--muted); }
-.finding-note a { font-size: 12px; font-weight: 700; white-space: nowrap; margin-left: auto; }
-
-/* Dark results band */
-.results-band { background: var(--ink); color: var(--paper); }
-.results-band .section-head > p:last-child { color: var(--panel-text); }
-.results-band .eyebrow { color: #b8c8c9; }
-.chart-block { border-top: 1px solid var(--panel-line); padding-block: 40px 44px; display: grid; gap: 18px; min-width: 0; }
-.chart-block h3 { font-size: clamp(22px, 2.2vw, 30px); letter-spacing: -0.8px; color: var(--paper); }
-.chart-sub { font-size: 13px; color: var(--panel-text); max-width: 760px; }
-.legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: var(--panel-text); }
-.legend i { display: inline-block; width: 12px; height: 12px; margin-right: 7px; vertical-align: -1px; }
-.legend i.dot { border-radius: 50%; }
-.chart-source { font-size: 11px; color: var(--panel-quiet); }
-.chart-source a { color: var(--panel-text); }
-.group-label { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--panel-quiet); padding-top: 14px; }
-.bars { display: grid; gap: 7px; }
-.chart-row { display: grid; grid-template-columns: 220px minmax(0, 1fr) 64px; align-items: center; gap: 16px; font-size: 13px; }
-.bar-track { height: 12px; background: var(--panel-track); position: relative; }
-.bar-fill { height: 100%; background: var(--panel-muted); width: var(--width); }
-.chart-row.lead .bar-fill { background: var(--lime); }
-.chart-row.lead .chart-label { font-weight: 700; color: var(--white); }
-.bar-track::after { content: ""; position: absolute; left: 93%; top: -4px; bottom: -4px; border-left: 1px dashed var(--lime); }
-.chart-row.human .bar-track::after { display: none; }
-.chart-value { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; }
-.svg-wrap { min-width: 0; }
-.svg-wrap svg { max-width: 100%; height: auto; display: block; }
-#gap-chart { max-width: 980px; }
-.multiples .svg-wrap svg { width: 100%; max-width: 560px; }
-.multiples { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-.multiples h4 { font: 600 15px var(--display); margin: 0 0 6px; color: var(--paper); }
-
-/* Light content blocks */
-.table-scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--white); }
-.compare { width: 100%; border-collapse: collapse; min-width: 640px; font-size: 14px; }
-.compare th, .compare td { text-align: left; padding: 15px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.compare thead th { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
-.compare tbody th { font-weight: 600; font-family: var(--display); }
-.compare tr:last-child th, .compare tr:last-child td { border-bottom: 0; }
-.compare .rules { background: #edf0e7; }
-.compare thead .rules { color: var(--teal); }
-.flag-no { color: var(--amber); font-weight: 700; }
-.flag-yes { color: var(--teal); font-weight: 700; }
-.built { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); }
-.built > div { padding: 28px 30px; border-right: 1px solid var(--line); display: grid; gap: 8px; align-content: start; }
-.built > div:last-child { border-right: 0; }
-.built strong { font: 600 21px var(--display); letter-spacing: -0.5px; }
-.built span { font-size: 14px; color: var(--muted); }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
-.two-col h3 { font-size: 26px; letter-spacing: -0.8px; margin-bottom: 18px; }
-.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; border-top: 1px solid var(--line); }
-.steps li { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
-.steps li::before { content: counter(s, decimal-leading-zero); font: 600 13px var(--display); color: var(--teal); padding-top: 2px; }
-.plain { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-.plain li { padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
-.plain-note { margin-top: 18px; font-size: 14px; color: var(--muted); }
-.next { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: end; border-top: 1px solid var(--line); padding-top: 48px; }
-.next h2 { font-size: clamp(30px, 3.2vw, 44px); margin-bottom: 18px; }
-.next p { color: var(--muted); max-width: 680px; line-height: 1.85; }
-footer { border-top: 1px solid var(--line); }
-footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
-
-@media (max-width: 1100px) {
-  .hero { grid-template-columns: 1fr; gap: 48px; }
-  .route-grid { grid-template-columns: 1fr 1fr; }
-  .route:nth-child(3n) { border-right: 1px solid var(--line); }
-  .route:nth-child(2n) { border-right: 0; }
-  .route:nth-last-child(-n+3) { border-bottom: 1px solid var(--line); }
-  .route:nth-last-child(-n+2) { border-bottom: 0; }
-  .site-header nav { display: none; }
-}
-@media (max-width: 800px) {
-  .section { padding-block: 64px; }
-  .hero { padding-block: 44px 48px; }
-  .hero-figure { padding: 24px 20px 20px; box-shadow: 8px 8px 0 #e2e9de; }
-  .stat-strip .wrap { grid-template-columns: 1fr 1fr; }
-  .stat-strip .wrap > div:nth-child(2) { border-right: 0; }
-  .route-grid, .built, .two-col, .multiples, .next { grid-template-columns: 1fr; }
-  .route { border-right: 0 !important; border-bottom: 1px solid var(--line) !important; }
-  .route:last-child { border-bottom: 0 !important; }
-  .built > div { border-right: 0; border-bottom: 1px solid var(--line); }
-  .built > div:last-child { border-bottom: 0; }
-  .chart-row { grid-template-columns: 130px minmax(0, 1fr) 50px; gap: 10px; font-size: 11px; }
-  .chart-value { font-size: 12px; }
-  .finding-note { flex-wrap: wrap; }
-  .finding-note a { margin-left: 0; }
-}
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 </style>
 
-<header class="site-header gutter">
-  <div class="wrap">
-    <a href="#top" class="brand" aria-label="Document Intelligence Lab, back to top">
-      <span class="brand-mark">DI<span>↗</span></span>
-      <span>Document<br><strong>Intelligence Lab</strong></span>
-    </a>
-    <nav aria-label="Main navigation">
-      <a href="#findings">Findings</a>
-      <a href="#results">Results</a>
-      <a href="#compare">Compare</a>
-      <a href="#practice">Best practice</a>
-      <a href="#next">Next</a>
-    </nav>
-    <a class="repo-link" href="evidence.html">Full evidence <span aria-hidden="true">↗</span></a>
-  </div>
+<a href="#main" class="skip">Skip to content</a>
+<header class="site-header">
+<a href="./" class="brand" aria-label="Document Intelligence Lab home"><span class="brand-mark">DI<span>↗</span></span><span>Document<br><strong>Intelligence Lab</strong></span></a>
+<nav aria-label="Main navigation"><a href="#findings">Findings</a><a href="#results">Results</a><a href="#compare">Compare</a><a href="#practice">Best practice</a><a href="#next">Next steps</a><a href="#resources">Sources</a></nav>
+<a class="repo-link" href="evidence.html">Full evidence <span aria-hidden="true">↗</span></a>
 </header>
+<main id="main">
 
-<main id="top">
-  <section class="gutter">
-    <div class="wrap hero">
-      <div>
-        <p class="eyebrow">Tayler Erbe / Research brief · Accessible charts</p>
-        <h1>If you have the data, describe the chart <em>from the data</em>.</h1>
-        <p class="hero-deck">I first built accessible chart descriptions with AI. Then I read the research. Even the best models still get chart facts wrong, handing them the data only helps a little, and they get worse as charts get busier.</p>
-        <p class="answer-line"><b>Short answer:</b> compute the description from the chart's data with rules. It cannot invent a number, it costs almost nothing to run, and every sentence can be checked against a downloadable table.</p>
-        <div class="hero-actions">
-          <a href="#findings" class="button primary">See the findings <span aria-hidden="true">↓</span></a>
-          <a href="evidence.html" class="text-link">Read every source ↗</a>
-        </div>
-        <p class="author-line"><b>Tayler Erbe</b> · Data scientist, applied AI · Current as of November 9, 2026</p>
-      </div>
+<section class="hero">
+<div class="hero-copy">
+<p class="eyebrow">TAYLER ERBE / RESEARCH BRIEF · ACCESSIBLE CHARTS</p>
+<h1>If you have the data, describe the chart <em>from the data</em>.</h1>
+<p class="hero-deck">I first built accessible chart descriptions with AI. Then I read the research. Even the best models still get chart facts wrong, handing them the data only helps a little, and they get worse as charts get busier.</p>
+<p class="answer-line"><b>Short answer:</b> compute the description from the chart's data with rules. It cannot invent a number, it costs almost nothing to run, and every sentence can be checked against a downloadable table.</p>
+<div class="hero-actions">
+<a href="#findings" class="button primary">See the findings <span aria-hidden="true">↓</span></a>
+<a href="evidence.html" class="text-link">Read every source ↗</a>
+<a href="https://github.com/tayler-erbe/semantic-visualizations-for-access" class="text-link">Research library on GitHub ↗</a>
+</div>
+<p class="author-line"><span><b>Tayler Erbe</b> · Data scientist, applied AI · accessible data products that hold up to checking. <a href="#about">About</a></span></p>
+</div>
+<div class="hero-figure" id="hero-figure">
+<div class="figure-top"><span>THE CLEAREST RESULTS</span>
+<div class="hero-tabs" role="tablist" aria-label="Headline results">
+<button role="tab" aria-selected="true" aria-controls="hp-data" id="ht-data">With data</button>
+<button role="tab" aria-selected="false" aria-controls="hp-captions" id="ht-captions" tabindex="-1">Captions</button>
+<button role="tab" aria-selected="false" aria-controls="hp-hard" id="ht-hard" tabindex="-1">Hard charts</button>
+</div></div>
+<div class="hero-panel" id="hp-data" role="tabpanel" aria-labelledby="ht-data">
+<h2>Gave it the data.<br>Barely helped.</h2>
+<div class="hero-bars" aria-label="Share of stated numbers that matched the data, pooled across tests with and without the data table: Gemini 3.5 Flash 79.7%, GPT-5.4 79.0%">
+<div><span>Gemini 3.5 Flash</span><strong>79.7%</strong><i style="--bar:79.7%"></i></div>
+<div class="muted-bar"><span>GPT-5.4</span><strong>79.0%</strong><i style="--bar:79%"></i></div>
+</div>
+<p>Numbers in "directly supported" claims that matched the chart's data within 2%, pooled across tests with and without the data table. Adding the table raised it by only 2 to 7 points. 102 charts, 1,224 descriptions (2026).</p>
+<a class="figure-source" href="evidence.html#data-supplied">See the study <span>↗</span></a>
+</div>
+<div class="hero-panel" id="hp-captions" role="tabpanel" aria-labelledby="ht-captions" hidden>
+<h2>82% of AI captions<br>had an error.</h2>
+<div class="hero-bars" aria-label="Captions with at least one factual error: all captions checked 82.1%, GPT-4V and Bard 81.3%">
+<div><span>All captions checked</span><strong>82.1%</strong><i style="--bar:82.1%"></i></div>
+<div class="muted-bar"><span>GPT-4V and Bard</span><strong>81.3%</strong><i style="--bar:81.3%"></i></div>
+</div>
+<p>Captions with at least one factual error in a human check of 1,187 AI chart captions (ACL Findings 2024). 2023-era models; no one has repeated the audit on 2026 models.</p>
+<a class="figure-source" href="evidence.html#captions">See the study <span>↗</span></a>
+</div>
+<div class="hero-panel" id="hp-hard" role="tabpanel" aria-labelledby="ht-hard" hidden>
+<h2>Best model 63%.<br>People 93%.</h2>
+<div class="hero-bars" aria-label="ChartMuseum accuracy: people 93.0%, Gemini 2.5 Pro 63.0%">
+<div><span>People</span><strong>93.0%</strong><i style="--bar:93%"></i></div>
+<div class="muted-bar"><span>Gemini 2.5 Pro, best model</span><strong>63.0%</strong><i style="--bar:63%"></i></div>
+</div>
+<p>Accuracy on 1,000 expert-written questions about real charts (ChartMuseum, NeurIPS 2025). The best open model scored 38.5%.</p>
+<a class="figure-source" href="#results">See all 20 models <span>↓</span></a>
+</div>
+</div>
+</section>
 
-      <div class="hero-figure">
-        <div class="figure-top">
-          <span>THE CLEAREST RESULTS</span>
-          <div class="hero-tabs" role="tablist" aria-label="Headline results">
-            <button role="tab" id="ht-data" aria-controls="hp-data" aria-selected="true">With data</button>
-            <button role="tab" id="ht-captions" aria-controls="hp-captions" aria-selected="false" tabindex="-1">Captions</button>
-            <button role="tab" id="ht-hard" aria-controls="hp-hard" aria-selected="false" tabindex="-1">Hard charts</button>
-          </div>
-        </div>
-        <div class="hero-panel" id="hp-data" role="tabpanel" aria-labelledby="ht-data">
-          <h2>Gave it the data.<br>Barely helped.</h2>
-          <div class="hero-bars" aria-label="Share of stated numbers that matched the data, pooled across tests with and without the data table: Gemini 3.5 Flash 79.7%, GPT-5.4 79.0%, Llama 4 Scout 71.3%">
-            <div><span>Gemini 3.5 Flash</span><strong>79.7%</strong><i style="--bar:79.7%"></i></div>
-            <div class="muted-bar"><span>GPT-5.4</span><strong>79.0%</strong><i style="--bar:79%"></i></div>
-            <div class="muted-bar"><span>Llama 4 Scout</span><strong>71.3%</strong><i style="--bar:71.3%"></i></div>
-          </div>
-          <p>Share of numbers in "directly supported" claims that matched the chart's data within 2%, pooled across tests with and without the data table. Adding the table raised it by only 2 to 7 points. 102 charts, 1,224 descriptions (2026).</p>
-          <a class="figure-source" href="evidence.html#data-supplied">See the study <span>↗</span></a>
-        </div>
-        <div class="hero-panel" id="hp-captions" role="tabpanel" aria-labelledby="ht-captions" hidden>
-          <h2>82% of AI captions<br>had an error.</h2>
-          <div class="hero-bars" aria-label="Captions with at least one factual error: all systems 82.1%, GPT-4V and Bard 81.3%, GPT-4 with extracted table 86.2%">
-            <div><span>All captions checked</span><strong>82.1%</strong><i style="--bar:82.1%"></i></div>
-            <div class="muted-bar"><span>GPT-4V and Bard</span><strong>81.3%</strong><i style="--bar:81.3%"></i></div>
-            <div class="muted-bar"><span>GPT-4 given an extracted table</span><strong>86.2%</strong><i style="--bar:86.2%"></i></div>
-          </div>
-          <p>Captions with at least one factual error, from a human check of 1,187 captions (ACL Findings 2024). 2023-era models.</p>
-          <a class="figure-source" href="evidence.html#captions">See the study <span>↗</span></a>
-        </div>
-        <div class="hero-panel" id="hp-hard" role="tabpanel" aria-labelledby="ht-hard" hidden>
-          <h2>Best model 63%.<br>People 93%.</h2>
-          <div class="hero-bars" aria-label="ChartMuseum accuracy: people 93.0%, Gemini 2.5 Pro 63.0%, best open model 38.5%">
-            <div><span>People</span><strong>93.0%</strong><i style="--bar:93%"></i></div>
-            <div class="muted-bar"><span>Gemini 2.5 Pro, best model</span><strong>63.0%</strong><i style="--bar:63%"></i></div>
-            <div class="muted-bar"><span>Qwen2.5-VL-72B, best open model</span><strong>38.5%</strong><i style="--bar:38.5%"></i></div>
-          </div>
-          <p>Accuracy on 1,000 expert-written questions about real charts (ChartMuseum, NeurIPS 2025).</p>
-          <a class="figure-source" href="#results">See all 20 models <span>↓</span></a>
-        </div>
-      </div>
-    </div>
-  </section>
+<section class="stat-strip" aria-label="Key facts">
+<div><strong>1 in 5</strong><span>stated numbers didn't match the data; adding the table helped 2–7 points</span></div>
+<div><strong>82%</strong><span>of AI chart captions had a factual error</span></div>
+<div><strong>~6%</strong><span>AI accuracy on 9 overlaid charts, people ~86%</span></div>
+<div><strong>0</strong><span>AI-generated words in Chart Details</span></div>
+</section>
 
-  <section class="stat-strip gutter" aria-label="Key facts">
-    <div class="wrap">
-      <div><strong>1 in 5</strong><span>stated numbers didn't match the data; adding the table helped 2–7 points</span></div>
-      <div><strong>82%</strong><span>of AI chart captions had a factual error</span></div>
-      <div><strong>~6%</strong><span>AI accuracy on 9 overlaid charts, people ~86%</span></div>
-      <div><strong>0</strong><span>AI-generated words in Chart Details</span></div>
-    </div>
-  </section>
+<section class="section wrap" id="findings">
+<div class="section-head">
+<p class="eyebrow">01 / FINDINGS</p>
+<h2>What the research<br>shows.</h2>
+<p>Each card names the finding, the number behind it, its main limit, and links to the study.</p>
+</div>
+<div class="route-grid six">
+<article class="route lead-route">
+<p class="route-id">AI GIVEN THE DATA</p>
+<h3>The data table barely helped</h3>
+<p class="why">About 1 in 5 numbers that GPT-5.4 and Gemini called directly supported didn't match the data. Adding the data table improved that by only a few points.</p>
+<div class="route-metrics"><div><strong>79.0%</strong><span>GPT-5.4 numbers matching,<br>all conditions pooled</span></div><div><strong>+2 to +7</strong><span>points gained by<br>adding the table</span></div></div>
+<span class="method-label">Read in full · 2026</span>
+<p class="caution">The paper doesn't publish a data-only rate, and it checks numbers only.</p>
+<a href="evidence.html#data-supplied">See the study ↗</a>
+</article>
+<article class="route">
+<p class="route-id">AI-WRITTEN CAPTIONS</p>
+<h3>82% had a factual error</h3>
+<p class="why">People checked 1,187 captions. Wrong values, labels and trend directions were common.</p>
+<div class="route-metrics"><div><strong>82%</strong><span>captions with<br>an error</span></div><div><strong>43%</strong><span>GPT-4V and Bard<br>sentences with an error</span></div></div>
+<span class="method-label">Read in full · 2024</span>
+<p class="caution">2023-era models. No one has repeated this audit on 2026 models.</p>
+<a href="evidence.html#captions">See the study ↗</a>
+</article>
+<article class="route">
+<p class="route-id">HARD CHART QUESTIONS</p>
+<h3>Best model 63%, people 93%</h3>
+<p class="why">Easy benchmarks are saturated. On realistic questions the gap with people is 30 points.</p>
+<div class="route-metrics"><div><strong>63.0%</strong><span>Gemini 2.5 Pro</span></div><div><strong>93.0%</strong><span>people</span></div></div>
+<span class="method-label">Read in full · 2025</span>
+<p class="caution">Models from early 2025. Newer models likely score higher.</p>
+<a href="#results">See all 20 models ↓</a>
+</article>
+<article class="route">
+<p class="route-id">BUSY CHARTS</p>
+<h3>Clutter breaks AI, not people</h3>
+<p class="why">As more histograms were overlaid in one chart, the model's accuracy collapsed. People barely slowed down.</p>
+<div class="route-metrics"><div><strong>43% → 6%</strong><span>AI, 4 to 9<br>overlaid charts</span></div><div><strong>~86%</strong><span>people at 9</span></div></div>
+<span class="method-label">Read in full · 2025</span>
+<p class="caution">One model, synthetic charts with no text. Values read from a figure.</p>
+<a href="#clutter">See the chart ↓</a>
+</article>
+<article class="route">
+<p class="route-id">SCREEN-READER USERS</p>
+<h3>The best AI help reached 55%</h3>
+<p class="why">Screen-reader users were 61% less accurate with typical charts. An optimized LLM summarizer raised task accuracy from 29% to 55%.</p>
+<div class="route-metrics"><div><strong>55%</strong><span>task accuracy with<br>LLM summaries + Q&amp;A</span></div><div><strong>126</strong><span>participants</span></div></div>
+<span class="method-label">Skimmed · 2021, 2026</span>
+<p class="caution">Different studies and tasks; read as direction, not one combined rate.</p>
+<a href="evidence.html#screen-readers">See the studies ↗</a>
+</article>
+<article class="route">
+<p class="route-id">BLIND READERS</p>
+<h3>Straight facts about the data</h3>
+<p class="why">Most blind readers wanted facts, not interpretation. Those facts are the easiest to compute from the data.</p>
+<div class="route-metrics"><div><strong>30 + 90</strong><span>blind and sighted<br>readers studied</span></div><div><strong>40%</strong><span>of blind readers want<br>levels combined</span></div></div>
+<span class="method-label">Read in full · 2021</span>
+<p class="caution">Preferences varied. Keep descriptions plain and let readers choose detail.</p>
+<a href="evidence.html#blind-readers">See the study ↗</a>
+</article>
+</div>
+<div class="finding-note"><span class="note-symbol" aria-hidden="true">!</span><div><h3>A high benchmark score is not a correct description.</h3><p>Top models now score around 90% on easy chart tests. A description makes several claims at once, so at 93% per claim, five claims are all right only about 70% of the time.</p></div><a href="evidence.html#reading">How to read the numbers ↗</a></div>
+</section>
 
-  <section class="section gutter" id="findings">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">01 / Findings</p>
-        <h2>What the research shows.</h2>
-        <p>Six findings from published studies. Each card gives the result, the number behind it, its main limit and a link to the evidence.</p>
-      </div>
-      <div class="route-grid">
-        <article class="route lead-route">
-          <p class="route-id">AI given the data</p>
-          <h3>The data table barely helped</h3>
-          <p class="why">About 1 in 5 numbers that GPT-5.4 and Gemini called directly supported didn't match the data. Adding the data table improved that by only a few points.</p>
-          <div class="route-metrics">
-            <div><strong>79.0%</strong><span>GPT-5.4 numbers matching,<br>all conditions pooled</span></div>
-            <div><strong>+2 to +7</strong><span>points gained by<br>adding the table</span></div>
-          </div>
-          <span class="method-label">Read in full · 2026</span>
-          <p class="caution">The paper doesn't publish a data-only rate, and it checks numbers only, so a matching number can still sit in a wrong sentence.</p>
-          <a href="evidence.html#data-supplied">See the study ↗</a>
-        </article>
-        <article class="route">
-          <p class="route-id">AI-written captions</p>
-          <h3>82% had a factual error</h3>
-          <p class="why">People checked 1,187 captions. Wrong values, labels and trend directions were common.</p>
-          <div class="route-metrics">
-            <div><strong>82%</strong><span>captions with<br>an error</span></div>
-            <div><strong>43%</strong><span>GPT-4V and Bard<br>sentences with an error</span></div>
-          </div>
-          <span class="method-label">Read in full · 2024</span>
-          <p class="caution">2023-era models. No one has repeated this audit on 2026 models.</p>
-          <a href="evidence.html#captions">See the study ↗</a>
-        </article>
-        <article class="route">
-          <p class="route-id">Hard chart questions</p>
-          <h3>Best model 63%, people 93%</h3>
-          <p class="why">Easy benchmarks are saturated. On realistic questions the gap with people is 30 points.</p>
-          <div class="route-metrics">
-            <div><strong>63.0%</strong><span>Gemini 2.5 Pro</span></div>
-            <div><strong>93.0%</strong><span>people</span></div>
-          </div>
-          <span class="method-label">Read in full · 2025</span>
-          <p class="caution">Models from early 2025. Newer models likely score higher.</p>
-          <a href="#results">See all 20 models ↓</a>
-        </article>
-        <article class="route">
-          <p class="route-id">Busy charts</p>
-          <h3>Clutter breaks AI, not people</h3>
-          <p class="why">As more histograms were overlaid in one chart, the model's accuracy collapsed. People barely slowed down.</p>
-          <div class="route-metrics">
-            <div><strong>~43% → ~6%</strong><span>AI, 4 to 9<br>overlaid charts</span></div>
-            <div><strong>~86%</strong><span>people at 9</span></div>
-          </div>
-          <span class="method-label">Read in full · 2025</span>
-          <p class="caution">One model (Claude 3.7 Sonnet), synthetic charts with no text. Values read from a figure.</p>
-          <a href="#clutter">See the chart ↓</a>
-        </article>
-        <article class="route">
-          <p class="route-id">Repeated AI work</p>
-          <h3>A quarter of content silently lost</h3>
-          <p class="why">Microsoft Research: frontier models corrupted 25% of document content over 20 delegated edits.</p>
-          <div class="route-metrics">
-            <div><strong>25%</strong><span>content lost,<br>frontier average</span></div>
-            <div><strong>11 of 52</strong><span>domains where the<br>best model was "ready"</span></div>
-          </div>
-          <span class="method-label">Read in full · 2026</span>
-          <p class="caution">About documents, not charts. Shows why unattended AI output needs checks.</p>
-          <a href="evidence.html#delegation">See the study ↗</a>
-        </article>
-        <article class="route">
-          <p class="route-id">Blind readers</p>
-          <h3>Straight facts about the data</h3>
-          <p class="why">Most blind readers wanted facts, not interpretation. Those facts are the easiest to compute from data.</p>
-          <div class="route-metrics">
-            <div><strong>30 + 90</strong><span>blind and sighted<br>readers studied</span></div>
-          </div>
-          <span class="method-label">Read in full · 2021</span>
-          <p class="caution">Preferences varied by reader. Descriptions should stay plain and factual.</p>
-          <a href="evidence.html#blind-readers">See the study ↗</a>
-        </article>
-      </div>
-      <div class="finding-note">
-        <span class="note-symbol" aria-hidden="true">!</span>
-        <div>
-          <h3>A high benchmark score is not a correct description.</h3>
-          <p>Top models now score around 90% on easy chart tests. A description makes several claims at once, so at 93% per claim, five claims are all right only about 70% of the time.</p>
-        </div>
-        <a href="evidence.html#reading">How to read the numbers ↗</a>
-      </div>
-    </div>
-  </section>
+<section class="section wrap" id="results">
+<div class="section-head">
+<p class="eyebrow">02 / RESULTS</p>
+<h2>ChartMuseum,<br>in three charts.</h2>
+<p>1,000 expert-written questions about real charts, 20 models, and a controlled test of busy charts. From the NeurIPS 2025 benchmark by the University of Texas at Austin.</p>
+</div>
+<div class="results-band one">
+<article>
+<p class="route-id">OVERALL ACCURACY · 1,000 QUESTIONS</p>
+<h3>No model comes within 30 points of people</h3>
+<div class="chart-legend"><span><i style="background:var(--amber)"></i>People</span><span><i style="background:var(--teal)"></i>Best model</span><span><i style="background:#9fb0ab"></i>Other models</span><span><i class="dash"></i>People, 93%</span></div>
+<div class="mini-bars wide" id="overall-chart" role="img" aria-label="ChartMuseum overall accuracy. People 93%. Best model Gemini 2.5 Pro 63%. Best open model 38.5%."></div>
+<p class="chart-note">Source: Tang et al., ChartMuseum, NeurIPS 2025, Table 3. People measured on a random 100-question subset.</p>
+<a class="text-link" href="evidence.html#chartmuseum">See the full table ↗</a>
+</article>
+<article>
+<p class="route-id">VISUAL VS TEXT QUESTIONS · 20 MODELS</p>
+<h3>Every model is weakest when it has to look</h3>
+<p>Accuracy on questions answerable from the chart's text, against questions that need visual reasoning. The gap is 17 to 38 points.</p>
+<div class="chart-legend"><span><i class="dot" style="background:var(--teal)"></i>Visual questions (510)</span><span><i class="dot" style="background:#9fb0ab"></i>Text questions (123)</span></div>
+<div class="svg-chart" id="gap-chart" role="img" aria-label="For all 20 models, accuracy on visual questions is far lower than on text questions. Gemini 2.5 Pro: 53.3% visual, 87.8% text."></div>
+<p class="chart-note">Source: ChartMuseum, Table 3.</p>
+</article>
+<article id="clutter">
+<p class="route-id">BUSY CHARTS · CONTROLLED TEST</p>
+<h3>Add clutter and the AI falls apart</h3>
+<p>Question: which histograms are left-skewed? The charts had no text to read, so the answer had to come from the shapes.</p>
+<div class="chart-legend"><span><i class="dot" style="background:var(--teal)"></i>Claude 3.7 Sonnet</span><span><i class="dash"></i>People</span></div>
+<div class="pair-charts">
+<div><h4>Each histogram in its own panel</h4><div class="svg-chart" id="subplot-chart" role="img" aria-label="Separate panels: AI about 88% falling to 79% from 4 to 9 histograms; people about 100% falling to 93%."></div></div>
+<div><h4>All histograms overlaid in one chart</h4><div class="svg-chart" id="overlay-chart" role="img" aria-label="Overlaid: AI about 43% falling to 6% from 4 to 9 histograms; people about 100% falling to 86%."></div></div>
+</div>
+<p class="chart-note">Source: ChartMuseum, Figure 2. Values read from the published figure and approximate. One model, 100 examples per question type; people were a subset of the authors.</p>
+<a class="text-link" href="evidence.html#clutter">See the study ↗</a>
+</article>
+</div>
+</section>
 
-  <section class="results-band section gutter" id="results">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">02 / Results</p>
-        <h2>ChartMuseum, in three charts.</h2>
-        <p>1,000 expert-written questions about real charts, 20 models, and a controlled test of busy charts. From the NeurIPS 2025 benchmark by the University of Texas at Austin.</p>
-      </div>
+<section class="use-section" id="compare">
+<div class="wrap">
+<div class="use-layout">
+<h2>Three ways to<br>describe a chart.</h2>
+<div><p class="large-copy">When the data already exists, rules win on every row that matters for accessibility. AI can read a picture or a table, but it can still state a wrong number, and it may say something different the next time.</p></div>
+</div>
+<div class="compare-wrap" role="region" aria-label="Comparison of three approaches" tabindex="0">
+<table class="compare">
+<thead><tr><th scope="col"></th><th scope="col">AI reads the chart image</th><th scope="col">AI reads the data</th><th scope="col" class="rules">Rules compute from the data</th></tr></thead>
+<tbody>
+<tr><th scope="row">Can state a wrong number</th><td><span class="no">Yes</span>, often, more on busy charts</td><td><span class="no">Yes</span>, still often</td><td class="rules"><span class="yes">No</span>, unless the data is wrong</td></tr>
+<tr><th scope="row">Same answer every time</th><td>No</td><td>No</td><td class="rules"><span class="yes">Yes</span></td></tr>
+<tr><th scope="row">Each sentence checkable</th><td>Hard</td><td>Partly</td><td class="rules"><span class="yes">Yes</span>, against the table</td></tr>
+<tr><th scope="row">Running cost</th><td>Per call, every view or refresh</td><td>Per call, every view or refresh</td><td class="rules">Near zero</td></tr>
+<tr><th scope="row">Also needs</th><td>Hosting, monitoring, validation, abuse limits</td><td>Hosting, monitoring, validation, abuse limits</td><td class="rules">Tests for each rule</td></tr>
+<tr><th scope="row">Main limit</th><td>Misreads the picture</td><td>Invents or miscounts</td><td class="rules">Says only what its rules cover</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
 
-      <div class="chart-block">
-        <h3>No model comes within 30 points of people.</h3>
-        <p class="chart-sub">Overall accuracy, grouped by model type. The dashed line marks people at 93%.</p>
-        <div class="legend"><span><i style="background:var(--lime)"></i>People</span><span><i style="background:var(--panel-muted)"></i>AI models</span><span><i style="border-left:1px dashed var(--lime);width:1px;margin-right:9px"></i>People, 93%</span></div>
-        <div class="bars" id="overall-chart" role="img" aria-label="ChartMuseum overall accuracy for people and 20 AI models. People 93%. Best model Gemini 2.5 Pro 63%."></div>
-        <p class="chart-source">Source: Tang et al., <a href="https://arxiv.org/abs/2505.13444">ChartMuseum</a>, NeurIPS 2025, Table 3. People measured on a random 100-question subset.</p>
-      </div>
+<section class="section wrap" id="built">
+<div class="section-head">
+<p class="eyebrow">03 / WHAT I BUILT</p>
+<h2>Chart Details.</h2>
+<p>On the <a href="https://legislationtrends2026-fgh8dvf0a4edhqc3.northcentralus-01.azurewebsites.net/">Legislative Intelligence Platform</a>, every chart has a Chart Details panel. Nothing in it is AI-generated. It is calculated from the chart's own data.</p>
+</div>
+<div class="results-band">
+<article><p class="route-id">LEVELS 1 TO 3</p><h3>Plain-language summary</h3><p>The main trend, highs, lows and changes, written by rules from the data.</p></article>
+<article><p class="route-id">SCREEN READERS</p><h3>Accessible data table</h3><p>The same numbers the chart draws, in a table a screen reader can navigate.</p></article>
+<article><p class="route-id">CHECK IT</p><h3>Excel download</h3><p>Anyone can check every statement against the source data.</p></article>
+</div>
+</section>
 
-      <div class="chart-block">
-        <h3>Every model is weakest when it has to look.</h3>
-        <p class="chart-sub">Accuracy on questions answerable from the chart's text, against questions that need visual reasoning. The gap is 17 to 38 points.</p>
-        <div class="legend"><span><i class="dot" style="background:var(--panel-text)"></i>Text questions</span><span><i class="dot" style="background:var(--lime)"></i>Visual questions</span></div>
-        <div class="svg-wrap" id="gap-chart" role="img" aria-label="For all 20 models, accuracy on visual questions is far lower than on text questions. Gemini 2.5 Pro: 53.3% visual, 87.8% text."></div>
-        <p class="chart-source">Source: ChartMuseum, Table 3. Visual: 510 questions. Text: 123 questions.</p>
-      </div>
+<section class="section wrap" id="practice" style="padding-top:0">
+<div class="section-head">
+<p class="eyebrow">04 / BEST PRACTICE</p>
+<h2>How to do it.</h2>
+<p>The same six steps work for any dashboard or report where the data behind the chart already exists.</p>
+</div>
+<ol class="steps6">
+<li><h3>Start from the data</h3><p>Use the data behind the chart, not a picture of it, whenever the data exists.</p></li>
+<li><h3>Compute the facts</h3><p>Write the core description with rules: direction, highs and lows, biggest change, comparisons.</p></li>
+<li><h3>State the thresholds</h3><p>Say what counts as "rising" or "roughly flat," so readers know the rule, not a judgment call.</p></li>
+<li><h3>Ship the table</h3><p>Put an accessible data table and a download next to every chart.</p></li>
+<li><h3>Test every rule</h3><p>Check each rule on hand-checked charts, including ties, gaps and flat lines.</p></li>
+<li><h3>Label any AI</h3><p>If you add AI, label it, and check every number it states against the data before showing it.</p></li>
+</ol>
+<div class="finding-note" style="margin-top:0"><span class="note-symbol" aria-hidden="true">i</span><div><h3>Where AI still helps.</h3><p>Answering a reader's follow-up questions, clearly labeled. Charts that exist only as images or PDFs, with extracted numbers checked by a person. Suggesting context that a person reviews. AI may get there; when you already have the data, readers shouldn't depend on it today.</p></div></div>
+</section>
 
-      <div class="chart-block" id="clutter">
-        <h3>Add clutter and the AI falls apart. People barely slow down.</h3>
-        <p class="chart-sub">Question: which histograms are left-skewed? Charts had no text to read, so the answer had to come from the shapes.</p>
-        <div class="legend"><span><i class="dot" style="background:var(--lime)"></i>People</span><span><i class="dot" style="background:var(--panel-muted)"></i>Claude 3.7 Sonnet</span></div>
-        <div class="multiples">
-          <div><h4>Each histogram in its own panel</h4><div class="svg-wrap" id="subplot-chart" role="img" aria-label="Separate panels: AI falls from about 88% to 79% as histograms go from 4 to 9; people stay above 92%."></div></div>
-          <div><h4>All histograms overlaid in one chart</h4><div class="svg-wrap" id="overlay-chart" role="img" aria-label="Overlaid: AI falls from about 43% to 6% as histograms go from 4 to 9; people stay at about 86% or above."></div></div>
-        </div>
-        <p class="chart-source">Source: ChartMuseum, Figure 2. Values read from the published figure and approximate. One model, 100 examples per question type; people were a subset of the authors.</p>
-      </div>
-    </div>
-  </section>
+<section class="use-section" id="next">
+<div class="wrap">
+<div class="use-layout">
+<h2>The bigger lesson<br>is about meaning.</h2>
+<div><p class="large-copy">Most of these errors come from the model not knowing what the numbers stand for. That points past charts: document what our data means, and any tool, AI or not, can use it correctly.</p></div>
+</div>
+<div class="roadmap" style="margin-top:45px">
+<article><span>01 / MEASURE</span><h3>Audit by level</h3><p>Score Chart Details against LLM descriptions on 100+ real charts, sentence by sentence and level by level, with every fact checked against the data.</p></article>
+<article><span>02 / EXTEND</span><h3>Rules for Level 3</h3><p>Add plain-language trend and distribution rules, the content blind readers ranked most useful.</p></article>
+<article><span>03 / TEST</span><h3>With screen-reader users</h3><p>Compare accuracy, time and trust against the published baselines, with readers choosing their level of detail.</p></article>
+<article><span>04 / FIX THE DATA</span><h3>Make the data ready</h3><p>Apply the same idea to the warehouse: a semantic layer so every tool knows what each number means.</p></article>
+</div>
+<div class="next-footer"><p><strong>Why measure our own charts.</strong> Benchmarks use other people's charts and single questions. A result on our own charts, with every statement checked, is the number that should decide what we deploy.</p><a class="text-link" href="https://github.com/tayler-erbe/semantic-visualizations-for-access/blob/main/docs/evaluation-plan.md">Evaluation plan ↗</a></div>
+</div>
+</section>
 
-  <section class="section gutter" id="compare">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">03 / Compare</p>
-        <h2>Three ways to describe a chart.</h2>
-        <p>When the data already exists, rules win on every row that matters for accessibility.</p>
-      </div>
-      <div class="table-scroll" role="region" aria-label="Comparison of three approaches" tabindex="0">
-        <table class="compare">
-          <thead><tr><th scope="col"></th><th scope="col">AI reads the chart image</th><th scope="col">AI reads the data</th><th scope="col" class="rules">Rules compute from the data</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">Can state a wrong number</th><td><span class="flag-no">Yes</span>, often, more on busy charts</td><td><span class="flag-no">Yes</span>, still often</td><td class="rules"><span class="flag-yes">No</span>, unless the data is wrong</td></tr>
-            <tr><th scope="row">Same answer every time</th><td>No</td><td>No</td><td class="rules"><span class="flag-yes">Yes</span></td></tr>
-            <tr><th scope="row">Each sentence checkable</th><td>Hard</td><td>Partly</td><td class="rules"><span class="flag-yes">Yes</span>, against the table</td></tr>
-            <tr><th scope="row">Running cost</th><td>Per call, every view or refresh</td><td>Per call, every view or refresh</td><td class="rules">Near zero</td></tr>
-            <tr><th scope="row">Also needs</th><td>Hosting, monitoring, validation, abuse limits</td><td>Hosting, monitoring, validation, abuse limits</td><td class="rules">Tests for each rule</td></tr>
-            <tr><th scope="row">Main limit</th><td>Misreads the picture</td><td>Invents or miscounts</td><td class="rules">Says only what its rules cover</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+<section class="resources wrap" id="resources">
+<div>
+<p class="eyebrow">05 / SOURCES AND DATA</p>
+<h2>Read it, share it,<br>check it.</h2>
+<p class="hero-deck">Every number on this page links to its study. The research library holds the papers that allow redistribution and links to the rest.</p>
+</div>
+<div class="resource-links">
+<a href="evidence.html"><span>Full evidence · every study, numbers and limits</span><b>↗</b></a>
+<a href="evidence.html#chartmuseum"><span>ChartMuseum results for all 20 models</span><b>↗</b></a>
+<a href="https://github.com/tayler-erbe/semantic-visualizations-for-access/blob/main/research/README.md"><span>Research library · 22 papers by topic</span><b>↗</b></a>
+<a href="https://github.com/tayler-erbe/semantic-visualizations-for-access/blob/main/docs/evaluation-plan.md"><span>Evaluation plan · rules versus AI, level by level</span><b>↗</b></a>
+<a href="https://vis.csail.mit.edu/pubs/vis-text-model/data/"><span>Four-level model dataset · 2,147 labeled sentences</span><b>↗</b></a>
+<a href="https://github.com/tayler-erbe/semantic-visualizations-for-access"><span>Code and research library · GitHub</span><b>↗</b></a>
+</div>
+</section>
 
-  <section class="section gutter" id="built" style="padding-top:0">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">04 / What I built</p>
-        <h2>Chart Details.</h2>
-        <p>On the <a href="https://legislationtrends2026-fgh8dvf0a4edhqc3.northcentralus-01.azurewebsites.net/">Legislative Intelligence Platform</a>, every chart has a Chart Details panel. Nothing in it is AI-generated. It is calculated from the chart's own data.</p>
-      </div>
-      <div class="built">
-        <div><strong>Plain-language summary</strong><span>The main trend, highs, lows and changes, written by rules.</span></div>
-        <div><strong>Accessible data table</strong><span>Screen-reader friendly, the same numbers the chart draws.</span></div>
-        <div><strong>Excel download</strong><span>Anyone can check every statement against the source.</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section gutter" id="practice" style="padding-top:0">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">05 / Best practice</p>
-        <h2>How to do it.</h2>
-      </div>
-      <div class="two-col">
-        <div>
-          <h3>Build it this way</h3>
-          <ol class="steps">
-            <li>Start from the data, not the picture, whenever the data exists.</li>
-            <li>Write the core description with rules: direction, highs and lows, biggest change, comparisons.</li>
-            <li>State your thresholds, such as what counts as "rising" or "roughly flat."</li>
-            <li>Ship the data table and a download next to every chart.</li>
-            <li>Test each rule on hand-checked charts, including ties, gaps and flat lines.</li>
-            <li>If you add AI, label it and check every number it states against the data.</li>
-          </ol>
-        </div>
-        <div>
-          <h3>Where AI still helps</h3>
-          <ul class="plain">
-            <li>Answering a reader's follow-up questions, clearly labeled as AI.</li>
-            <li>Charts that exist only as images or PDFs, with the extracted numbers checked by a person.</li>
-            <li>Suggesting context that a person then reviews.</li>
-          </ul>
-          <p class="plain-note">AI may get there. Today, when you already have the data, there is no reason to make readers depend on it.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section gutter" id="next" style="padding-top:0">
-    <div class="wrap next">
-      <div>
-        <p class="eyebrow">06 / Next</p>
-        <h2>The bigger lesson is about meaning.</h2>
-        <p>Most of these errors come from the model not knowing what the numbers stand for. That points past charts to a larger fix: documenting what our data means so that any tool, AI or not, can use it correctly.</p>
-      </div>
-      <a href="evidence.html" class="button primary">Read the full evidence <span aria-hidden="true">↗</span></a>
-    </div>
-  </section>
+<section class="section wrap" id="about" style="padding-top:20px">
+<div class="use-layout">
+<div><p class="eyebrow">ABOUT THIS WORK</p><h2 style="font-size:clamp(30px,3vw,42px)">Tayler Erbe</h2></div>
+<div>
+<p class="large-copy" style="font-size:20px">I am a data scientist working in applied AI. I build data products that hold up to checking, and I test AI tools before anyone relies on them.</p>
+<p>This brief draws on published studies, read in full where marked. Chart Details was built for the Legislative Intelligence Platform with no AI in the description pipeline. AI assistants helped gather and check the research. To talk about accessible reporting for your own dashboards, see <a href="https://taylererbe.com/">my site</a>.</p>
+</div>
+</div>
+</section>
 </main>
-
-<footer class="gutter">
-  <div class="wrap">
-    <span><b>Tayler Erbe</b> · Document Intelligence Lab</span>
-    <span>Six sources read in full; leaderboard figures marked for verification. Current as of November 9, 2026.</span>
-  </div>
+<footer class="wrap">
+<div><strong>Document Intelligence Lab</strong><p>Tayler Erbe · Last updated 9 November 2026 · Published research only. Leaderboard figures marked for verification.</p></div>
+<a href="evidence.html">Full evidence and sources ↗</a>
 </footer>
-
 <script>
+/* Interactive parts of the accessible-charts brief: headline tabs and the three ChartMuseum charts. Content only, no data calls. */
+'use strict';
 (function () {
-  // Hero tabs
-  var tabs = Array.prototype.slice.call(document.querySelectorAll('.hero-tabs [role="tab"]'));
-  function select(tab) {
-    tabs.forEach(function (t) {
-      var on = t === tab;
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      t.tabIndex = on ? 0 : -1;
-      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Headline result tabs (same behaviour as the Lab brief)
+  var hb = Array.prototype.slice.call(document.querySelectorAll('.hero-tabs button'));
+  function show(n) {
+    hb.forEach(function (b, i) {
+      b.setAttribute('aria-selected', i === n);
+      b.tabIndex = i === n ? 0 : -1;
+      $(b.getAttribute('aria-controls')).hidden = i !== n;
     });
   }
-  tabs.forEach(function (t, i) {
-    t.addEventListener('click', function () { select(t); });
-    t.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
-        select(n); n.focus(); e.preventDefault();
-      }
+  hb.forEach(function (b, i) {
+    b.addEventListener('click', function () { show(i); });
+    b.addEventListener('keydown', function (e) {
+      if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].indexOf(e.key) < 0) return;
+      e.preventDefault();
+      var n = (i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1) + hb.length) % hb.length;
+      show(n); hb[n].focus();
     });
   });
 
-  // ChartMuseum Table 3 (test set). visual, synthesis, visualText, text, overall
-  var groups = [
-    { name: 'Open models, 2B to 3B', rows: [
-      ['InternVL3-2B', 12.2, 13.5, 18.4, 30.1, 16.0],
-      ['Qwen2.5-VL-3B', 16.7, 21.1, 26.5, 28.5, 21.0] ] },
-    { name: 'Open and specialized, 7B to 8B', rows: [
-      ['Qwen2.5-VL-7B', 19.4, 24.8, 36.3, 41.5, 26.8],
-      ['InternVL3-8B', 23.5, 24.8, 32.9, 42.3, 28.2],
-      ['Bespoke-MiniChart-7B', 26.3, 32.3, 41.0, 54.5, 34.0] ] },
-    { name: 'Open models, 32B and up', rows: [
-      ['InternVL3-38B', 26.3, 30.8, 35.0, 52.0, 32.1],
-      ['InternVL3-78B', 26.9, 34.6, 41.0, 59.3, 35.2],
-      ['Qwen2.5-VL-32B', 29.0, 36.1, 46.2, 62.6, 38.1],
-      ['Pixtral-Large-124B', 31.6, 36.1, 40.6, 65.9, 38.5],
-      ['Qwen2.5-VL-72B', 30.4, 35.3, 42.3, 68.3, 38.5] ] },
-    { name: 'Proprietary', rows: [
-      ['Gemini-1.5-Flash', 22.7, 30.8, 36.3, 56.1, 31.1],
-      ['Gemini-1.5-Pro', 31.0, 43.6, 49.6, 65.9, 41.3],
-      ['GPT-4o', 31.8, 45.1, 50.9, 65.9, 42.2],
-      ['GPT-4.1', 37.1, 53.4, 54.3, 78.9, 48.4],
-      ['GPT-4.1-mini', 43.9, 48.1, 59.8, 80.5, 52.7],
-      ['Claude-3.5-Sonnet', 45.7, 53.4, 61.5, 78.0, 54.4],
-      ['Claude-3.7-Sonnet', 50.6, 55.6, 69.2, 88.6, 60.3] ] },
-    { name: 'Proprietary, reasoning', rows: [
-      ['o3 (high)', 50.4, 63.2, 69.7, 85.4, 60.9],
-      ['o4-mini (high)', 51.2, 66.2, 68.4, 86.2, 61.5],
-      ['Claude-3.7-Sonnet (think)', 52.5, 56.4, 71.8, 86.2, 61.7],
-      ['Gemini-2.5-Pro', 53.3, 64.7, 70.1, 87.8, 63.0] ] }
+  // ChartMuseum test set, Table 3: visual, synthesis, visual/text, text, overall
+  var GROUPS = [
+    { name: 'Open models, 2B to 3B', rows: [['InternVL3-2B', 12.2, 13.5, 18.4, 30.1, 16.0], ['Qwen2.5-VL-3B', 16.7, 21.1, 26.5, 28.5, 21.0]] },
+    { name: 'Open and specialized, 7B to 8B', rows: [['Qwen2.5-VL-7B', 19.4, 24.8, 36.3, 41.5, 26.8], ['InternVL3-8B', 23.5, 24.8, 32.9, 42.3, 28.2], ['Bespoke-MiniChart-7B', 26.3, 32.3, 41.0, 54.5, 34.0]] },
+    { name: 'Open models, 32B and up', rows: [['InternVL3-38B', 26.3, 30.8, 35.0, 52.0, 32.1], ['InternVL3-78B', 26.9, 34.6, 41.0, 59.3, 35.2], ['Qwen2.5-VL-32B', 29.0, 36.1, 46.2, 62.6, 38.1], ['Pixtral-Large-124B', 31.6, 36.1, 40.6, 65.9, 38.5], ['Qwen2.5-VL-72B', 30.4, 35.3, 42.3, 68.3, 38.5]] },
+    { name: 'Proprietary', rows: [['Gemini-1.5-Flash', 22.7, 30.8, 36.3, 56.1, 31.1], ['Gemini-1.5-Pro', 31.0, 43.6, 49.6, 65.9, 41.3], ['GPT-4o', 31.8, 45.1, 50.9, 65.9, 42.2], ['GPT-4.1', 37.1, 53.4, 54.3, 78.9, 48.4], ['GPT-4.1-mini', 43.9, 48.1, 59.8, 80.5, 52.7], ['Claude-3.5-Sonnet', 45.7, 53.4, 61.5, 78.0, 54.4], ['Claude-3.7-Sonnet', 50.6, 55.6, 69.2, 88.6, 60.3]] },
+    { name: 'Proprietary, reasoning', rows: [['o3 (high)', 50.4, 63.2, 69.7, 85.4, 60.9], ['o4-mini (high)', 51.2, 66.2, 68.4, 86.2, 61.5], ['Claude-3.7-Sonnet (think)', 52.5, 56.4, 71.8, 86.2, 61.7], ['Gemini-2.5-Pro', 53.3, 64.7, 70.1, 87.8, 63.0]] }
   ];
   var HUMAN = 93.0;
+  var C = { ink: '#142b36', muted: '#58666b', line: '#d9ded8', track: '#e4e8e1', teal: '#386d68', soft: '#9fb0ab', amber: '#8a4c28' };
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function row(label, v, cls) {
-    return '<div class="chart-row ' + (cls || '') + '"><span class="chart-label">' + esc(label) + '</span>' +
-      '<div class="bar-track"><div class="bar-fill" style="--width:' + v + '%"></div></div>' +
-      '<span class="chart-value">' + v.toFixed(1) + '%</span></div>';
+  function bar(label, v, cls) {
+    return '<div class="' + (cls || '') + '"><span>' + esc(label) + '</span><strong>' + v.toFixed(1) + '%</strong>' +
+      '<i' + (cls === 'muted-row' ? ' class="muted"' : '') + ' style="--bar:' + v + '%"><span class="base" style="left:' + HUMAN + '%"></span></i></div>';
   }
 
-  // Chart 1: overall accuracy
-  var html = row('People', HUMAN, 'lead human');
-  groups.forEach(function (g) {
-    html += '<div class="group-label">' + esc(g.name) + '</div>';
-    g.rows.forEach(function (r) { html += row(r[0], r[5]); });
-  });
-  document.getElementById('overall-chart').innerHTML = html;
+  // Chart 1: overall accuracy, people as the dashed amber baseline
+  var host1 = $('overall-chart');
+  if (host1) {
+    var best = 0;
+    GROUPS.forEach(function (g) { g.rows.forEach(function (r) { if (r[5] > best) best = r[5]; }); });
+    var html = '<div class="human"><span>People</span><strong>93.0%</strong><i style="--bar:93%"></i></div>';
+    GROUPS.forEach(function (g) {
+      html += '<p class="group-label">' + esc(g.name) + '</p>';
+      g.rows.forEach(function (r) { html += bar(r[0], r[5], r[5] === best ? '' : 'muted-row'); });
+    });
+    host1.innerHTML = html;
+  }
 
   var NS = 'http://www.w3.org/2000/svg';
   function el(name, attrs, text) {
@@ -575,37 +576,35 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
     if (text != null) e.textContent = text;
     return e;
   }
-  var C = { text: '#cfddd9', quiet: '#b0c0c3', grid: '#2f4751', track: '#44606a', lime: '#c4ef62', muted: '#819c9e' };
 
-  // Chart 2: visual vs text dumbbell, drawn at the container's real width so labels stay readable
+  // Chart 2: visual vs text accuracy per model, drawn at the container's real width
   function drawGap() {
-    var host = document.getElementById('gap-chart');
+    var host = $('gap-chart');
+    if (!host) return;
     var all = [];
-    groups.forEach(function (g) { g.rows.forEach(function (r) { all.push(r); }); });
+    GROUPS.forEach(function (g) { g.rows.forEach(function (r) { all.push(r); }); });
     all.sort(function (a, b) { return b[5] - a[5]; });
-    var W = Math.max(320, Math.min(host.clientWidth || 760, 980));
+    var W = Math.max(300, Math.min(host.clientWidth || 900, 1000));
     var narrow = W < 560;
-    var left = narrow ? 128 : 200, right = narrow ? 34 : 60, y0 = 34, step = narrow ? 22 : 26, H = y0 + all.length * step + 12;
-    var fs = narrow ? 11 : 13;
+    var left = narrow ? 150 : 190, right = narrow ? 30 : 64, y0 = 30, step = narrow ? 22 : 25, H = y0 + all.length * step + 10;
     var x = function (v) { return left + v / 100 * (W - left - right); };
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, 'font-family': 'DM Sans, Arial, sans-serif', 'font-size': fs });
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, 'font-family': 'DM Sans, Arial, sans-serif', 'font-size': narrow ? 10.5 : 12 });
     [0, 25, 50, 75, 100].forEach(function (t) {
-      svg.appendChild(el('line', { x1: x(t), x2: x(t), y1: y0 - 10, y2: H - 8, stroke: C.grid }));
-      svg.appendChild(el('text', { x: x(t), y: 16, fill: C.quiet, 'text-anchor': 'middle', 'font-size': '11' }, t + '%'));
+      svg.appendChild(el('line', { x1: x(t), x2: x(t), y1: y0 - 10, y2: H - 6, stroke: C.line }));
+      svg.appendChild(el('text', { x: x(t), y: 14, fill: C.muted, 'text-anchor': 'middle', 'font-size': '11' }, t + '%'));
     });
     all.forEach(function (r, i) {
-      var y = y0 + i * step;
-      var g = el('g', {});
+      var y = y0 + i * step, g = el('g', {});
       g.appendChild(el('title', {}, r[0] + ': visual ' + r[1] + '%, text ' + r[4] + '%, gap ' + (r[4] - r[1]).toFixed(1) + ' points'));
-      g.appendChild(el('text', { x: left - 10, y: y + 4, fill: C.text, 'text-anchor': 'end' }, r[0]));
-      g.appendChild(el('line', { x1: x(r[1]), x2: x(r[4]), y1: y, y2: y, stroke: C.track, 'stroke-width': '4' }));
-      g.appendChild(el('circle', { cx: x(r[4]), cy: y, r: narrow ? 4.5 : 5.5, fill: C.text }));
-      g.appendChild(el('circle', { cx: x(r[1]), cy: y, r: narrow ? 4.5 : 5.5, fill: C.lime }));
+      g.appendChild(el('text', { x: left - 10, y: y + 4, fill: C.ink, 'text-anchor': 'end' }, r[0]));
+      g.appendChild(el('line', { x1: x(r[1]), x2: x(r[4]), y1: y, y2: y, stroke: C.track, 'stroke-width': '5' }));
+      g.appendChild(el('circle', { cx: x(r[4]), cy: y, r: narrow ? 4.5 : 5.5, fill: C.soft }));
+      g.appendChild(el('circle', { cx: x(r[1]), cy: y, r: narrow ? 4.5 : 5.5, fill: C.teal }));
       svg.appendChild(g);
     });
     var top = all[0];
-    svg.appendChild(el('text', { x: x(top[4]) + 9, y: y0 + 4, fill: C.text, 'font-size': '11' }, top[4] + '%'));
-    svg.appendChild(el('text', { x: x(top[1]) - 9, y: y0 + 4, fill: C.lime, 'font-size': '11', 'text-anchor': 'end' }, top[1] + '%'));
+    svg.appendChild(el('text', { x: x(top[4]) + 9, y: y0 + 4, fill: C.muted, 'font-size': '11' }, top[4] + '%'));
+    svg.appendChild(el('text', { x: x(top[1]) - 9, y: y0 + 4, fill: C.teal, 'font-size': '11', 'font-weight': '700', 'text-anchor': 'end' }, top[1] + '%'));
     host.innerHTML = '';
     host.appendChild(svg);
   }
@@ -614,32 +613,33 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
   window.addEventListener('resize', function () {
     clearTimeout(timer);
     timer = setTimeout(function () {
-      var w = document.getElementById('gap-chart').clientWidth;
-      if (Math.abs(w - lastW) > 20) { lastW = w; drawGap(); }
+      var h = $('gap-chart'); if (!h) return;
+      if (Math.abs(h.clientWidth - lastW) > 20) { lastW = h.clientWidth; drawGap(); }
     }, 150);
   });
 
   // Chart 3: clutter test, values read from ChartMuseum Figure 2 (approximate)
-  var clutter = {
+  var CLUTTER = {
     subplot: { ai: [[4, 88], [5, 84], [6, 86.5], [7, 83.5], [8, 79.5], [9, 79]], people: [[4, 100], [6, 99], [9, 92.5]] },
     overlay: { ai: [[4, 43], [5, 25], [6, 16], [7, 16], [8, 8], [9, 6]], people: [[4, 100], [6, 97.5], [9, 86]] }
   };
   function lineChart(id, d) {
-    var W = 360, H = 250, l = 44, r = 16, t = 14, b = 40;
+    var host = $(id); if (!host) return;
+    var W = 340, H = 240, l = 40, r = 16, t = 14, b = 40;
     var x = function (n) { return l + (n - 4) / 5 * (W - l - r); };
     var y = function (v) { return t + (1 - v / 100) * (H - t - b); };
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, 'font-family': 'DM Sans, Arial, sans-serif', 'font-size': '11' });
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', 'font-family': 'DM Sans, Arial, sans-serif', 'font-size': '11' });
     [0, 25, 50, 75, 100].forEach(function (v) {
-      svg.appendChild(el('line', { x1: l, x2: W - r, y1: y(v), y2: y(v), stroke: C.grid }));
-      svg.appendChild(el('text', { x: l - 8, y: y(v) + 4, fill: C.quiet, 'text-anchor': 'end' }, v + '%'));
+      svg.appendChild(el('line', { x1: l, x2: W - r, y1: y(v), y2: y(v), stroke: C.line }));
+      svg.appendChild(el('text', { x: l - 8, y: y(v) + 4, fill: C.muted, 'text-anchor': 'end' }, v + '%'));
     });
-    [4, 5, 6, 7, 8, 9].forEach(function (n) {
-      svg.appendChild(el('text', { x: x(n), y: H - b + 18, fill: C.quiet, 'text-anchor': 'middle' }, n));
-    });
-    svg.appendChild(el('text', { x: (l + W - r) / 2, y: H - 6, fill: C.quiet, 'text-anchor': 'middle' }, 'Number of histograms'));
-    [['ai', C.muted, 'Claude 3.7 Sonnet'], ['people', C.lime, 'People']].forEach(function (s) {
+    [4, 5, 6, 7, 8, 9].forEach(function (n) { svg.appendChild(el('text', { x: x(n), y: H - b + 18, fill: C.muted, 'text-anchor': 'middle' }, n)); });
+    svg.appendChild(el('text', { x: (l + W - r) / 2, y: H - 5, fill: C.muted, 'text-anchor': 'middle' }, 'Number of histograms'));
+    [['people', C.amber, 'People', '5 4'], ['ai', C.teal, 'Claude 3.7 Sonnet', '']].forEach(function (s) {
       var pts = d[s[0]];
-      svg.appendChild(el('polyline', { points: pts.map(function (p) { return x(p[0]) + ',' + y(p[1]); }).join(' '), fill: 'none', stroke: s[1], 'stroke-width': '2.5' }));
+      var attrs = { points: pts.map(function (p) { return x(p[0]) + ',' + y(p[1]); }).join(' '), fill: 'none', stroke: s[1], 'stroke-width': '2.5' };
+      if (s[3]) attrs['stroke-dasharray'] = s[3];
+      svg.appendChild(el('polyline', attrs));
       pts.forEach(function (p) {
         var c = el('circle', { cx: x(p[0]), cy: y(p[1]), r: 4, fill: s[1] });
         c.appendChild(el('title', {}, s[2] + ', ' + p[0] + ' histograms: about ' + p[1] + '%'));
@@ -648,9 +648,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; justify-content: space-b
       var last = pts[pts.length - 1];
       svg.appendChild(el('text', { x: x(last[0]) - 2, y: y(last[1]) + (s[0] === 'ai' ? 18 : -10), fill: s[1], 'text-anchor': 'end', 'font-weight': '700' }, '~' + Math.round(last[1]) + '%'));
     });
-    document.getElementById(id).appendChild(svg);
+    host.appendChild(svg);
   }
-  lineChart('subplot-chart', clutter.subplot);
-  lineChart('overlay-chart', clutter.overlay);
+  lineChart('subplot-chart', CLUTTER.subplot);
+  lineChart('overlay-chart', CLUTTER.overlay);
 })();
+
 </script>
