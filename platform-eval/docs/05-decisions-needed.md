@@ -19,6 +19,8 @@ These need answers in Phase 0. Until they are answered, `config/scoring.yaml` st
 9. Required **regions / residency** (G1).
 10. Do we need **air-gapped** operation for any workload? (This would favour on-prem by definition. Make it a gate if it is required.)
 
+10a. Are **frontier proprietary models** (Claude/GPT/Gemini-class) acceptable for any workload? If yes, Track B must include them, and on-prem's quality gap is measured, not assumed (see `06-capability-map.md`).
+
 ## Resources & timeline
 11. Engineering **effort budget** per platform (proposal: 80 h build + 40 h tuning).
 12. **Snowflake trial ends in ~74 days** (as of 2026-11-11). Extend it to a formal POC, or schedule it first?

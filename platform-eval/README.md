@@ -37,6 +37,7 @@ A comparison like this usually goes wrong in one of four ways:
 | [`docs/03-scoring.md`](docs/03-scoring.md) | Gates, weights, 0–5 anchored scales, and the statistics rules |
 | [`docs/04-tco-model.md`](docs/04-tco-model.md) | How cloud consumption and on-prem capex/opex become one comparable number |
 | [`docs/05-decisions-needed.md`](docs/05-decisions-needed.md) | Open questions stakeholders must answer before the weights are locked |
+| [`docs/06-capability-map.md`](docs/06-capability-map.md) | What Snowflake / Databricks / both / neither do, and where build-yourself fits or doesn't |
 | [`config/platforms.yaml`](config/platforms.yaml) | Environment manifest: the exact configuration each platform runs |
 | [`config/scoring.yaml`](config/scoring.yaml) | Proposed weights, gates and scale anchors (not yet locked) |
 | [`test-suites/workloads.yaml`](test-suites/workloads.yaml) | Workload catalog with metrics and dataset requirements |
