@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platform-eval/result-record.schema.json",
+  "title": "Result record",
+  "description": "One request/response on one platform. All platforms write to the same table.",
+  "type": "object",
+  "required": ["run_id", "platform", "track", "workload", "item_id", "dataset_sha256", "manifest_version", "model", "decoding", "timing", "status"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "run_type": { "enum": ["smoke", "quality", "load", "soak", "failure_injection"] },
+    "platform": { "enum": ["SNOW", "DBX", "ONPREM"] },
+    "track": { "enum": ["A", "B"] },
+    "workload": { "type": "string" },
+    "item_id": { "type": "string" },
+    "dataset_sha256": { "type": "string" },
+    "manifest_version": { "type": "string" },
+    "model": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "serving_method": { "type": "string" },
+        "precision": { "type": "string" }
+      }
+    },
+    "decoding": { "type": "object" },
+    "cache_state": { "enum": ["cold", "warm", "disabled"] },
+    "client_location": { "type": "string" },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "sent_at": { "type": "string", "format": "date-time" },
+        "ttft_ms": { "type": "number" },
+        "e2e_ms": { "type": "number" },
+        "server_ms": { "type": ["number", "null"] }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "properties": { "input": { "type": "integer" }, "output": { "type": "integer" } }
+    },
+    "agent": {
+      "type": "object",
+      "properties": {
+        "steps": { "type": "integer" },
+        "tool_calls": { "type": "array", "items": { "type": "object" } },
+        "unsafe_action": { "type": "boolean" }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "units": { "type": "number" },
+        "unit_type": { "enum": ["snowflake_credits", "dbu", "tokens", "gpu_seconds"] },
+        "usd_list": { "type": "number" },
+        "usd_negotiated": { "type": ["number", "null"] }
+      }
+    },
+    "status": { "enum": ["ok", "error", "timeout", "rate_limited", "refused"] },
+    "error_class": { "type": ["string", "null"] },
+    "output": { "type": "string" },
+    "grades": {
+      "type": "object",
+      "description": "metric_name -> value; include grader id (judge model/version or human id)"
+    }
+  }
+}

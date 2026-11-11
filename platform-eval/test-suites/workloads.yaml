@@ -1,0 +1,74 @@
+# Workload catalog. Priorities are set in config/scoring.yaml (workload_priority).
+# Every dataset: split into dev (tuning allowed) and test (held-out, scored only); SHA-256 recorded.
+
+W1_rag:
+  name: Document Q&A (RAG)
+  dataset:
+    corpus: { min_docs: 2000, source: TBD, classification: TBD }
+    items: { test: 400, dev: 100 }
+    mix: { single_hop: 0.70, multi_hop: 0.20, unanswerable: 0.10 }
+    fields: [question, gold_answer, gold_chunk_ids, answerable]
+  metrics: [retrieval_recall_at_5, retrieval_recall_at_10, answer_correctness_judge_1to5, groundedness, abstention_accuracy, ttft_s, e2e_latency_s, cost_per_task]
+  tracks: [A, B]
+
+W2_text_to_sql:
+  name: Natural-language analytics over governed tables
+  dataset:
+    schema: { tables: TBD, rows_checksum_required: true }
+    items: { test: 400, dev: 100 }
+    difficulty_mix: { single_table: 0.25, joins: 0.30, aggregation_windows: 0.30, ambiguous: 0.15 }
+    fields: [question, gold_sql, gold_result_hash, requires_order]
+  metrics: [execution_accuracy, permission_violation_count, e2e_latency_s, cost_per_task]
+  security_tests: [restricted_table_denied, row_level_policy_honored, column_masking_honored]
+  tracks: [A, B]
+
+W3_batch_extraction:
+  name: LLM-in-SQL batch extraction / classification
+  dataset:
+    rows_for_throughput: 100000
+    rows_labelled: 1000
+    fields: [row_id, input_text, gold_fields]
+  metrics: [field_f1, rows_per_hour, cost_per_1m_rows, failure_rate]
+  tracks: [A]
+
+W4_summarization:
+  name: Long-document summarization
+  dataset:
+    items: { test: 150, dev: 30 }
+    length_bands_tokens: ["<=8k", "8k-32k", ">32k"]
+    fields: [doc_id, document, reference_points]
+  metrics: [coverage_judge, factual_consistency, concision, truncation_occurred, e2e_latency_s, cost_per_task]
+  tracks: [A]
+
+W5_agent_tools:
+  name: Agent with tools (shared MCP server)
+  tools:
+    run_sql:      { side_effect: false, note: "read-only role" }
+    search_docs:  { side_effect: false }
+    get_customer: { side_effect: false, note: "mock API" }
+    create_ticket: { side_effect: true, note: "mock; must require user confirmation" }
+  dataset:
+    scenarios: { test: 150, dev: 40 }
+    mix: { single_tool: 0.25, multi_step: 0.40, needs_clarification: 0.10, impossible: 0.10, side_effect_confirm: 0.15 }
+    fields: [scenario_id, user_turns, success_checker, acceptable_trajectories, forbidden_actions]
+  metrics: [task_success_rate, tool_selection_accuracy, argument_accuracy, steps_per_task, tokens_per_task, cost_per_task, unsafe_action_rate, e2e_latency_s]
+  tracks: [A, B]    # B = Snowflake Agent Studio/Cortex Agents vs Databricks agent framework vs on-prem agent stack
+
+W6_retrieval:
+  name: Embedding & retrieval only
+  dataset:
+    queries: 500
+    relevance_labels: graded_0to3
+  metrics: [ndcg_at_10, recall_at_10, index_build_time, incremental_update_latency_s, query_latency_p95]
+  tracks: [A, B]
+
+W7_guardrails:
+  name: Guardrails & adversarial
+  dataset:
+    prompt_injection_docs: 50
+    prompt_injection_tool_outputs: 50
+    seeded_synthetic_pii_records: 100
+    jailbreak_prompts: 100
+    benign_controls: 100   # measure over-refusal too
+  metrics: [injection_success_rate, pii_leak_rate, harmful_compliance_rate, over_refusal_rate, audit_log_completeness]
+  tracks: [A, B]

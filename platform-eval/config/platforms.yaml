@@ -1,0 +1,85 @@
+# Environment manifest. Fill in during Phase 2; update (and re-run the smoke suite) on any change.
+# Every result record references manifest_version, so results can be traced to the exact environment.
+manifest_version: 0.1.0
+last_updated: null
+
+common:
+  track_a_model:
+    name: TBD            # e.g. an open-weight instruct model chosen in Phase 0
+    version: TBD         # exact HF revision / catalog version
+    context_window: TBD
+  decoding:              # F2 — set explicitly on every platform, never rely on defaults
+    temperature: 0
+    top_p: 1.0
+    max_tokens: 1024
+    stop: []
+    seed: 42             # where supported
+  embedding_model: TBD   # Track A (F4)
+  judge_model:           # F10 — neutral, not a contender
+    name: TBD
+    hosted_on: TBD
+  shared_mcp_server:     # F5
+    url: TBD
+    tools: [run_sql, search_docs, get_customer, create_ticket]
+
+platforms:
+  SNOW:
+    account_type: trial          # trial | poc | production — trial expires ~2027-01-24 (74 days from 2026-11-11)
+    region: TBD
+    edition: TBD
+    eval_role: AI_EVAL_ROLE      # F11 — dedicated least-privilege role, NOT SYSADMIN/ACCOUNTADMIN
+    warehouse: { name: TBD, size: TBD, auto_suspend_s: TBD }
+    track_a_serving:
+      method: TBD                # cortex_managed | spcs_byo
+      model_id: TBD
+      precision_reported_by_vendor: TBD
+      compute_pool: TBD          # SPCS only: instance family / GPU
+    track_b:
+      agent: Cortex Agents / Agent Studio
+      text_to_sql: Cortex Analyst
+      retrieval: Cortex Search
+      gateway: AI Gateway        # record whether it is in the request path
+    cache_settings: { USE_CACHED_RESULT: false }
+    quotas_confirmed_in_writing: false
+
+  DBX:
+    account_type: TBD
+    cloud: TBD
+    region: TBD
+    tier: TBD
+    eval_principal: TBD          # dedicated service principal
+    track_a_serving:
+      method: TBD                # fmapi_pay_per_token | provisioned_throughput | custom_serving
+      endpoint: TBD
+      model_id: TBD
+      precision_reported_by_vendor: TBD
+      gpu_type: TBD
+      min_replicas: TBD
+      scale_to_zero: TBD
+    track_b:
+      agent: TBD                 # e.g. Mosaic AI Agent Framework
+      text_to_sql: TBD           # e.g. Genie
+      retrieval: Vector Search
+    quotas_confirmed_in_writing: false
+
+  ONPREM:
+    hardware:
+      gpu_model: TBD
+      gpus_per_node: TBD
+      nodes: TBD
+      cpu_ram_per_node: TBD
+      interconnect: TBD
+      is_production_class: TBD   # false => results marked "projected"
+    software:
+      serving_engine: TBD        # e.g. vLLM / SGLang + version
+      cuda_driver: TBD
+      orchestration: TBD         # e.g. Kubernetes + version
+      vector_store: TBD
+      sql_engine: TBD            # for W2 (e.g. Postgres / Trino)
+      agent_framework: TBD
+    track_a_serving:
+      model_id: TBD
+      precision: TBD             # bf16 | fp8 | int4 ...
+      tensor_parallel: TBD
+      prefix_cache: TBD          # report on/off as separate configs (F6)
+    network_location_vs_users: TBD   # F7

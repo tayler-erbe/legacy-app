@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "platform-eval/test-case.schema.json",
+  "title": "Test case",
+  "description": "One item in a golden dataset. Identical across all platforms.",
+  "type": "object",
+  "required": ["item_id", "workload", "split", "input", "grading"],
+  "properties": {
+    "item_id": { "type": "string" },
+    "workload": { "enum": ["W1_rag", "W2_text_to_sql", "W3_batch_extraction", "W4_summarization", "W5_agent_tools", "W6_retrieval", "W7_guardrails"] },
+    "split": { "enum": ["dev", "test", "smoke"] },
+    "category": { "type": "string", "description": "e.g. multi_hop, joins, side_effect_confirm" },
+    "input": {
+      "type": "object",
+      "properties": {
+        "system_prompt_id": { "type": "string" },
+        "user_turns": { "type": "array", "items": { "type": "string" } },
+        "context_refs": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["user_turns"]
+    },
+    "expected": {
+      "type": "object",
+      "description": "Workload-specific gold data: gold_answer, gold_chunk_ids, gold_sql, gold_result_hash, gold_fields, acceptable_trajectories, forbidden_actions, answerable"
+    },
+    "grading": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": { "enum": ["exact", "result_set_match", "field_f1", "checker", "judge", "human", "judge+human"] },
+        "rubric_id": { "type": "string" },
+        "checker_id": { "type": "string" }
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

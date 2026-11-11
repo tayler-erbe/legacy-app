@@ -1,0 +1,67 @@
+# Pre-registered scoring (F13). PROPOSED values — change freely until locked.
+# Once locked, every change must be appended to change_log with reason + approver.
+locked: false
+locked_on: null
+approved_by: []
+
+gates:
+  G1_data_residency:   { required: true, description: "Prompts, data, embeddings processed/stored only in approved locations" }
+  G2_no_training:      { required: true, description: "Contractual + technical guarantee our data is not used for vendor training" }
+  G3_access_control:   { required: true, description: "RBAC/row-level security honored via AI layer; W2/W5 permission tests 100%" }
+  G4_auditability:     { required: true, description: "Prompt, response, user, timestamp recoverable from logs" }
+  G5_min_quality:      { required: true, description: "Each critical workload >= its min threshold on held-out set" }
+  G6_slo_at_peak:      { required: true, description: "p95 latency and error rate meet SLO at 1x peak" }
+  G7_model_flexibility: { required: true, description: "Can run the Track A open-weight model" }
+
+weights:            # must sum to 100
+  D1_quality: 25
+  D4_cost_tco: 20
+  D2_D3_performance_reliability: 15
+  D5_security_governance: 15
+  D6_data_integration: 10
+  D7_operability: 10
+  D8_strategic: 5
+
+workload_priority:  # set in Phase 0: critical | secondary | out_of_scope
+  W1_rag: TBD
+  W2_text_to_sql: TBD
+  W3_batch_extraction: TBD
+  W4_summarization: TBD
+  W5_agent_tools: TBD
+  W6_retrieval: TBD
+  W7_guardrails: TBD
+
+slo:                # set in Phase 0
+  p95_latency_s: { W1: TBD, W2: TBD, W4: TBD, W5: TBD }
+  max_error_rate: 0.01
+  expected_peak_rps: TBD
+
+anchors:            # absolute thresholds, written before results (no relative scoring)
+  latency_p95_vs_slo:     { 5: 0.50, 4: 0.75, 3: 1.00, 2: 1.25, 1: 1.50 }   # ratio <= value; else 0
+  quality_vs_min_threshold:   # points above the G5 minimum threshold
+    { 5: 15, 4: 10, 3: 5, 2: 2, 1: 0 }
+  cost_vs_budget_per_1k_tasks: # ratio of cost to target budget
+    { 5: 0.50, 4: 0.75, 3: 1.00, 2: 1.25, 1: 1.50 }
+  engineer_hours_to_slo_vs_budget:
+    { 5: 0.50, 4: 0.75, 3: 1.00, 2: 1.25, 1: 1.50 }
+  qualitative:  # D5-D8; each score must cite evidence
+    5: "Native, automated, policy-as-code, audited; no workaround"
+    4: "Native with minor configuration"
+    3: "Supported with manual configuration or extra component"
+    2: "Possible only with custom build / significant workaround"
+    1: "Partially possible; material gap"
+    0: "Not possible"
+
+statistics:
+  min_items: { critical: 400, secondary: 100 }
+  ci: { method: bootstrap, level: 0.95, resamples: 10000 }
+  paired_binary_test: mcnemar
+  multiple_comparison: holm
+  judge_calibration: { min_items: 100, min_kappa: 0.6, min_spearman: 0.7 }
+  performance_runs_min: 3
+
+sensitivity:
+  weight_perturbation: 0.5     # +/-50% per dimension
+  stakeholder_weight_sets: []  # collect in Phase 0
+
+change_log: []   # - { date, change, reason, approved_by }
